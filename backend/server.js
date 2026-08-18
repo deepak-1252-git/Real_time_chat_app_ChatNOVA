@@ -81,8 +81,8 @@ io.on("connection", (socket) => {
                     });
 
                 }
-            } 
-
+            }
+            
             io.emit("onlineUsers", onlineUserList);
 
         } catch (error) {
