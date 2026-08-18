@@ -1,5 +1,8 @@
 import Sidebar from "../components/chat/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
+import CallingOverlay from "../components/chat/calls/CallingOverlay";
+import IncomingCallOverlay from "../components/chat/calls/IncomingCallOverlay";
+import ConnectedCallOverlay from "../components/chat/calls/ConnectedCallOverlay";
 import VideoCall from "../components/chat/VideoCall";
 import "../styles/chat.css";
 
@@ -10,6 +13,7 @@ import socket from "../socket";
 function Chat() {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
+    const selectedUserData = onlineUsers.find((user) => String(user.userId) === String(selectedUser));
     const [searchText, setSearchText] = useState("");
 
     const [message, setMessage] = useState("");
@@ -496,7 +500,7 @@ function Chat() {
         }
 
     }, [callStatus, callType]);
-    
+
     const getVideoStream = async () => {
 
         try {
@@ -1090,158 +1094,57 @@ function Chat() {
 
             <ChatWindow
                 selectedUser={selectedUser}
+                selectedUsername={selectedUserData?.username}
                 messages={messages}
                 message={message}
                 setMessage={setMessage}
                 onSend={sendMessage}
                 currentUserId={user.id}
-                // isOnline={onlineUsers.includes(selectedUser)}
-                isOnline={selectedUser}
+                isOnline={onlineUsers.some(
+                    (onlineUser) =>
+                        String(onlineUser.userId) ===
+                        String(selectedUser)
+                )}
                 onBack={handleBackToSidebar}
                 onAudioCall={startAudioCall}
                 onVideoCall={startVideoCall}
             />
 
             {callStatus === "calling" && (
-                <div className="call-test-overlay">
-
-                    <div className="call-test-box">
-
-                        <div className="call-avatar">
-                            👤
-                        </div>
-
-                        <h2>
-                            {selectedUser}
-                        </h2>
-
-                        <p>
-                            {callType === "audio"
-                                ? "Audio call"
-                                : "Video call"}
-                        </p>
-
-                        <p>
-                            Calling...
-                        </p>
-
-                        <button
-                            type="button"
-                            className="reject-call-button"
-                            onClick={endCall}
-                        >
-                            📞 End Call
-                        </button>
-
-                    </div>
-
-                </div>
+                <CallingOverlay
+                    selectedUser={selectedUser}
+                    callType={callType}
+                    onEndCall={endCall}
+                />
             )}
 
             {callStatus === "incoming" && (
-                <div className="call-test-overlay">
-
-                    <div className="call-test-box">
-
-                        <div className="call-avatar">
-                            👤
-                        </div>
-
-                        <h2>
-                            {caller}
-                        </h2>
-
-                        <p>
-                            Incoming{" "}
-                            {callType === "audio"
-                                ? "Audio"
-                                : "Video"}{" "}
-                            Call
-                        </p>
-
-                        <div className="incoming-call-actions">
-
-                            <button
-                                type="button"
-                                className="accept-call-button"
-                                onClick={
-                                    callType === "video"
-                                        ? acceptVideoCall
-                                        : acceptAudioCall
-                                }
-                            >
-                                {callType === "video"
-                                    ? "📹 Accept"
-                                    : "📞 Accept"}
-                            </button>
-
-                            <button
-                                type="button"
-                                className="reject-call-button"
-                                onClick={endCall}
-                            >
-                                ❌ Reject
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
+                <IncomingCallOverlay
+                    caller={caller}
+                    callType={callType}
+                    onAccept={
+                        callType === "video"
+                            ? acceptVideoCall
+                            : acceptAudioCall
+                    }
+                    onReject={endCall}
+                />
             )}
 
-            {callStatus === "connected" && (
-                <div className="call-test-overlay">
-
-                    <div className="call-test-box">
-
-                        <div className="call-avatar">
-                            {callType === "video"
-                                ? "📹"
-                                : "🎙️"}
-                        </div>
-
-                        <h2>
-                            {caller || selectedUser}
-                        </h2>
-
-                        <p>
-                            {callType === "audio"
-                                ? "Audio Call"
-                                : "Video Call"}
-                        </p>
-
-                        <p>
-                            Connected
-                        </p>
-
-                        <div className="incoming-call-actions">
-
-                            <button
-                                type="button"
-                                className="mute-call-button"
-                                onClick={toggleMute}
-                            >
-                                {isMuted ? "🔊 Unmute" : "🔇 Mute"}
-                            </button>
-                            <button
-                                type="button"
-                                className="reject-call-button"
-                                onClick={endCall}
-                            >
-                                📞 End Call
-                            </button>
-
-
-                        </div>
-
-                    </div>
-                </div>
-            )}
+            {callStatus === "connected" &&
+                callType === "audio" && (
+                    <ConnectedCallOverlay
+                        caller={caller}
+                        selectedUser={selectedUser}
+                        callType={callType}
+                        isMuted={isMuted}
+                        onMute={toggleMute}
+                        onEndCall={endCall}
+                    />
+                )}
             {callStatus === "connected" &&
                 callType === "video" &&
                 (
-
                     <VideoCall
                         localVideoRef={localVideoRef}
                         remoteVideoRef={remoteVideoRef}

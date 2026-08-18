@@ -1,4 +1,5 @@
  function ChatHeader({
+    selectedUsername,
     selectedUser,
     isOnline,
     onBack,
@@ -26,7 +27,7 @@
 
                 <div>
                     <h3>
-                        {selectedUser}
+                        {selectedUsername || selectedUser}
                     </h3>
 
                     <span className="chat-user-status">

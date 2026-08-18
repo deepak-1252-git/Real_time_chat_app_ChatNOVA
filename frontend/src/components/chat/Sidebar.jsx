@@ -1,7 +1,6 @@
 import ProfileMenu from "./ProfileMenu";
 import UserSearch from "./UserSearch";
 import UserList from "./UserList";
-// import { startSession } from "../../../../backend/models/userModel";
 
 function Sidebar({
     user,

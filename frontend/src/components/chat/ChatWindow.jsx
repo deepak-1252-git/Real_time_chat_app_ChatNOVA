@@ -4,6 +4,7 @@ import MessageInput from "./MessageInput";
 import EmptyChat from "./EmptyChat";
 
 function ChatWindow({
+    selectedUsername,
     selectedUser,
     messages,
     message,
@@ -28,6 +29,7 @@ function ChatWindow({
         <main className="chat-window">
 
             <ChatHeader
+                selectedUsername={selectedUsername}
                 selectedUser={selectedUser}
                 isOnline={isOnline}
                 onBack={onBack}
