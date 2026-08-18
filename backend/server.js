@@ -81,9 +81,7 @@ io.on("connection", (socket) => {
                     });
 
                 }
-            }
-
-            console.log("Online users:", onlineUserList);
+            } 
 
             io.emit("onlineUsers", onlineUserList);
 
