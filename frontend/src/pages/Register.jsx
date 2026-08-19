@@ -50,13 +50,13 @@ function Register() {
             <div className="auth-card">
 
                 <div className="auth-logo">
-                    💬
+                    <img src="src/assets/favicon2.jpg" alt="favicon" class="logo-img" />
                 </div>
 
                 <h1>Create Account</h1>
 
                 <p className="auth-subtitle">
-                    Join ChatApp today
+                    Join ChatNOVA today
                 </p>
 
                 <form onSubmit={handleRegister}>

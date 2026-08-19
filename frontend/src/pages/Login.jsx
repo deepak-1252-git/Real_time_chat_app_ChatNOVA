@@ -56,7 +56,7 @@ function Login() {
             <div className="auth-card">
 
                 <div className="auth-logo">
-                    💬
+                    <img src="src/assets/favicon2.jpg" alt="favicon" class="logo-img" />
                 </div>
 
                 <h1>Welcome Back</h1>

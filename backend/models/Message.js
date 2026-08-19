@@ -25,4 +25,9 @@ const messageSchema = new mongoose.Schema(
     }
 );
 
+messageSchema.index(
+    { createdAt: 1 },
+    { expireAfterSeconds: 86400 }
+);
+
 module.exports = mongoose.model("Message", messageSchema);
