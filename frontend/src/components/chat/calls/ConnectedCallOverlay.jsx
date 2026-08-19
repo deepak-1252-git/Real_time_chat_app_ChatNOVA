@@ -1,6 +1,7 @@
 function ConnectedCallOverlay({
     caller,
     selectedUser,
+    displayName,
     callType,
     isMuted,
     onMute,
@@ -18,7 +19,7 @@ function ConnectedCallOverlay({
                 </div>
 
                 <h2>
-                    {caller || selectedUser}
+                    {displayName || caller || selectedUser}
                 </h2>
 
                 <p>

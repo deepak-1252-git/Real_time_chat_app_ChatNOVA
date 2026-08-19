@@ -1,5 +1,6 @@
 function CallingOverlay({
     selectedUser,
+    displayName,
     callType,
     onEndCall
 }) {
@@ -13,7 +14,7 @@ function CallingOverlay({
                 </div>
 
                 <h2>
-                    {selectedUser}
+                    {displayName || selectedUser}
                 </h2>
 
                 <p>

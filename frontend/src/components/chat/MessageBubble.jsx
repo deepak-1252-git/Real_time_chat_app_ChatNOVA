@@ -2,15 +2,13 @@ function MessageBubble({ message, isMine }) {
 
     return (
         <div
-            className={`message-row ${
-                isMine ? "mine" : "theirs"
-            }`}
+            className={`message-row ${isMine ? "mine" : "theirs"
+                }`}
         >
 
             <div
-                className={`message-bubble ${
-                    isMine ? "mine" : "theirs"
-                }`}
+                className={`message-bubble ${isMine ? "mine" : "theirs"
+                    }`}
             >
 
                 <div className="message-text">

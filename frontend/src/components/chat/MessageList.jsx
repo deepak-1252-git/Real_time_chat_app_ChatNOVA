@@ -15,6 +15,11 @@ function MessageList({ messages, currentUserId }) {
 
     return (
         <div className="message-list">
+            <div className="infotag">
+                <p>
+                    💡Chats vanish in 24h - snap it!
+                </p>
+            </div>
 
             {messages.length === 0 ? (
 
@@ -38,10 +43,7 @@ function MessageList({ messages, currentUserId }) {
 
                     return (
                         <MessageBubble
-                            key={
-                                message._id ||
-                                index
-                            }
+                            key={message._id || index}
                             message={message}
                             isMine={isMine}
                         />

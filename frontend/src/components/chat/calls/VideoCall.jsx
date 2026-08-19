@@ -1,6 +1,7 @@
 function VideoCall({
     localVideoRef,
     remoteVideoRef,
+    remoteUserName,
     isMuted,
     isCameraOff,
     onMute,
@@ -21,7 +22,7 @@ function VideoCall({
                 />
 
                 <div className="remote-user-name">
-                    Remote User
+                    {remoteUserName || "Remote User"}
                 </div>
 
             </div>

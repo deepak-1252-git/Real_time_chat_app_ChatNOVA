@@ -3,7 +3,7 @@ import ChatWindow from "../components/chat/ChatWindow";
 import CallingOverlay from "../components/chat/calls/CallingOverlay";
 import IncomingCallOverlay from "../components/chat/calls/IncomingCallOverlay";
 import ConnectedCallOverlay from "../components/chat/calls/ConnectedCallOverlay";
-import VideoCall from "../components/chat/VideoCall";
+import VideoCall from "../components/chat/calls/VideoCall";
 import "../styles/chat.css";
 
 
@@ -13,7 +13,6 @@ import socket from "../socket";
 function Chat() {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
-    const selectedUserData = onlineUsers.find((user) => String(user.userId) === String(selectedUser));
     const [searchText, setSearchText] = useState("");
 
     const [message, setMessage] = useState("");
@@ -49,6 +48,19 @@ function Chat() {
     };
 
     const user = JSON.parse(localStorage.getItem("user"));
+
+    const selectedUserData = onlineUsers.find(
+        (user) =>
+            String(user.userId) ===
+            String(selectedUser));
+    const selectedUsername = selectedUserData?.username || selectedUser;
+
+    const callerUserData = onlineUsers.find(
+        (onlineUser) =>
+            String(onlineUser.userId) ===
+            String(caller)
+    );
+    const callerUsername = callerUserData?.username || caller;
 
     useEffect(() => {
 
@@ -1094,7 +1106,7 @@ function Chat() {
 
             <ChatWindow
                 selectedUser={selectedUser}
-                selectedUsername={selectedUserData?.username}
+                headerUsername={selectedUsername}
                 messages={messages}
                 message={message}
                 setMessage={setMessage}
@@ -1113,6 +1125,7 @@ function Chat() {
             {callStatus === "calling" && (
                 <CallingOverlay
                     selectedUser={selectedUser}
+                    displayName={selectedUsername}
                     callType={callType}
                     onEndCall={endCall}
                 />
@@ -1121,6 +1134,7 @@ function Chat() {
             {callStatus === "incoming" && (
                 <IncomingCallOverlay
                     caller={caller}
+                    displayName={callerUsername}
                     callType={callType}
                     onAccept={
                         callType === "video"
@@ -1136,6 +1150,7 @@ function Chat() {
                     <ConnectedCallOverlay
                         caller={caller}
                         selectedUser={selectedUser}
+                        displayName={selectedUsername} 
                         callType={callType}
                         isMuted={isMuted}
                         onMute={toggleMute}
@@ -1148,6 +1163,7 @@ function Chat() {
                     <VideoCall
                         localVideoRef={localVideoRef}
                         remoteVideoRef={remoteVideoRef}
+                        remoteUserName={selectedUsername}
                         isMuted={isMuted}
                         isCameraOff={isCameraOff}
                         onMute={toggleMute}

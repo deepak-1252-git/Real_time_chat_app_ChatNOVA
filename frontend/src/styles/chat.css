@@ -29,6 +29,7 @@
 
     background: #f8fafc;
 }
+
 /* ----------------profile-menu */
 .profile-menu {
     height: 70px;
@@ -164,6 +165,7 @@
 .profile-dropdown .logout-button {
     color: #dc2626;
 }
+
 /*--------------- search-user----------------  */
 .user-search {
     position: relative;
@@ -948,10 +950,25 @@
 .end-call-button:hover {
     background: #dc2626;
 }
+/*  ----------------info-tag-------------------- */
+.infotag {
+    width: fit-content;
+    max-width: 90%;
+    margin: 0 auto 18px ;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #7c7ed14e;
+    text-align: center;
+}
 
-
+.infotag p {
+    margin: 0;
+    font-size: 11px;
+    color: #607798;
+    line-height: 1.0;
+}
 /* =========================================
-   RESPONSIVE CHAT UI
+                RESPONSIVE CHAT UI
    ========================================= */
 
 .back-button {

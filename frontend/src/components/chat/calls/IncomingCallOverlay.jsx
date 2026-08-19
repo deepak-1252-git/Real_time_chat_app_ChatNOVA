@@ -1,5 +1,6 @@
 function IncomingCallOverlay({
     caller,
+    displayName,
     callType,
     onAccept,
     onReject
@@ -14,7 +15,7 @@ function IncomingCallOverlay({
                 </div>
 
                 <h2>
-                    {caller}
+                    {displayName || caller}
                 </h2>
 
                 <p>
