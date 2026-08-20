@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link , useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 
 function Register() {
@@ -50,7 +49,7 @@ function Register() {
             <div className="auth-card">
 
                 <div className="auth-logo">
-                    <img src="src/assets/favicon2.jpg" alt="favicon" class="logo-img" />
+                    <img src="favicon.jpg" alt="favicon" className="logo-img" />
                 </div>
 
                 <h1>Create Account</h1>

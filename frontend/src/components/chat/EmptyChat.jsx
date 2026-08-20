@@ -2,8 +2,8 @@ function EmptyChat() {
     return (
         <div className="empty-chat">
 
-            <div className="empty-chat-icon">
-                💬
+            <div className="auth-logo">
+                <img src="favicon.jpg" alt="favicon" class="logo-img" />
             </div>
 
             <h2>

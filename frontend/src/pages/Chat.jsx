@@ -47,7 +47,13 @@ function Chat() {
         ]
     };
 
-    const user = JSON.parse(localStorage.getItem("user"));
+    // const user = JSON.parse(localStorage.getItem("user"));
+    const storedUser =
+        localStorage.getItem("user");
+
+    const user = storedUser
+        ? JSON.parse(storedUser)
+        : null;
 
     const selectedUserData = onlineUsers.find(
         (user) =>
@@ -1150,7 +1156,7 @@ function Chat() {
                     <ConnectedCallOverlay
                         caller={caller}
                         selectedUser={selectedUser}
-                        displayName={selectedUsername} 
+                        displayName={selectedUsername}
                         callType={callType}
                         isMuted={isMuted}
                         onMute={toggleMute}

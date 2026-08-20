@@ -1,0 +1,311 @@
+.app-loader {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f8fafc;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* -------------------------------- */
+.auth--logo {
+  width: 75px;
+  height: 75px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #2563eb;
+  font-size: 27px;
+}
+
+.logo--img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* ------------------------------ */
+
+.loader-content h2 {
+  margin: 0 0 18px;
+
+  font-size: 22px;
+
+  color: #111827;
+}
+
+.loader-content p {
+  margin-top: 12px;
+
+  font-size: 13px;
+
+  color: #6b7280;
+}
+
+/* ----------------------------- */
+/* Logo (Jerk + Pop/Bounce) */
+.loader-logo {
+  position: absolute;
+  right: -16px;
+  top: -14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 2px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ 
+  animation: logoJerkAndBounce 2.6s cubic-bezier(0.45, 0.05, 0.2, 1) infinite;
+}
+
+.loader-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* --------------------------------- */
+
+/* Outer Wrapper */
+.loader-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 1. Spinner (Stuck wheel motion) */
+.loader-spinner {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(219, 234, 254, 0.2);
+  border-top-color: #3b82f6;
+  border-right-color: #60a5fa;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.35);
+  animation: wheelStruggleSpin 2.6s cubic-bezier(0.45, 0.05, 0.2, 1) infinite;
+}
+
+/* Center Anchor Pin */
+.center-pin {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #94a3b8;
+  border: 2px solid #38bdf8;
+  border-radius: 50%;
+  z-index: 5;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+}
+
+/* 2. Rope Arm (Rotating & Stretching from Center) */
+.rope-arm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 75px;
+  /* Spinner radius + bahar ka distance */
+  height: 4px;
+  transform-origin: left center;
+  z-index: 3;
+  animation: ropeSwing 2.6s cubic-bezier(0.45, 0.05, 0.2, 1) infinite;
+}
+
+/* Smooth Braided Rope Texture */
+.rope-line {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: repeating-linear-gradient(45deg,
+      #e2b170,
+      #e2b170 3px,
+      #b47b36 3px,
+      #b47b36 6px,
+      #784c1b 6px,
+      #784c1b 9px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform-origin: left center;
+  animation: ropeTensionStretch 2.6s ease-in-out infinite;
+}
+
+/* 3. Logo Icon (Outside the Spinner) */
+
+
+
+
+/* Spinner: 3 baar struggle karega, fir smooth full 720deg spin */
+@keyframes wheelStruggleSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  12% {
+    transform: rotate(40deg);
+  }
+
+  20% {
+    transform: rotate(10deg);
+  }
+
+  32% {
+    transform: rotate(85deg);
+  }
+
+  42% {
+    transform: rotate(20deg);
+  }
+
+  54% {
+    transform: rotate(140deg);
+  }
+
+  64% {
+    transform: rotate(35deg);
+  }
+
+  /* Breakout / Free wheeling */
+  76% {
+    transform: rotate(190deg);
+  }
+
+  100% {
+    transform: rotate(720deg);
+  }
+}
+
+/* Rope ka angle spinner ke sath swing karega */
+@keyframes ropeSwing {
+  0% {
+    transform: translateY(-50%) rotate(0deg);
+  }
+
+  12% {
+    transform: translateY(-50%) rotate(35deg);
+  }
+
+  20% {
+    transform: translateY(-50%) rotate(8deg);
+  }
+
+  32% {
+    transform: translateY(-50%) rotate(75deg);
+  }
+
+  42% {
+    transform: translateY(-50%) rotate(18deg);
+  }
+
+  54% {
+    transform: translateY(-50%) rotate(125deg);
+  }
+
+  64% {
+    transform: translateY(-50%) rotate(30deg);
+  }
+
+  /* Breakout - Rope swings around completely */
+  76% {
+    transform: translateY(-50%) rotate(180deg);
+  }
+
+  100% {
+    transform: translateY(-50%) rotate(720deg);
+  }
+}
+
+/* Rope tension stretch (tanchav aur dheel) */
+@keyframes ropeTensionStretch {
+
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+
+  12%,
+  32%,
+  54% {
+    transform: scaleX(1.18);
+  }
+
+  /* Khinchav ke waqt stretch */
+  20%,
+  42%,
+  64% {
+    transform: scaleX(0.92);
+  }
+
+  /* Rebound ke waqt loose */
+  72% {
+    transform: scaleX(1.25);
+  }
+
+  /* Maximum tension */
+  78% {
+    transform: scaleX(1.0);
+  }
+
+  /* Released */
+}
+
+/* Logo icon ka counter-jerk & uchhalna */
+@keyframes logoJerkAndBounce {
+
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  12% {
+    transform: scale(0.95) translate(4px, 2px) rotate(15deg);
+  }
+
+  20% {
+    transform: scale(1) translate(-2px, -1px) rotate(-5deg);
+  }
+
+  32% {
+    transform: scale(0.92) translate(8px, 4px) rotate(25deg);
+  }
+
+  42% {
+    transform: scale(1) translate(-3px, -2px) rotate(-8deg);
+  }
+
+  54% {
+    transform: scale(0.9) translate(12px, 6px) rotate(35deg);
+  }
+
+  64% {
+    transform: scale(1.05) translate(-4px, -3px) rotate(-12deg);
+  }
+
+  /* Snap / Uchhalna (Air Launch) */
+  74% {
+    transform: scale(1.25) translate(18px, -16px) rotate(45deg);
+  }
+
+  82% {
+    transform: scale(1) translate(-2px, 2px) rotate(0deg);
+  }
+}

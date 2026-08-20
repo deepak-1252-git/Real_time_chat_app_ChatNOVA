@@ -1,55 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import Register from "./pages/Register";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Chat from "./pages/Chat";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AppLoader from "./pages/AppLoader";
 
 function App() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                <Route
-                    path="/"
-                    element={
-                        <Navigate
-                            to="/login"
-                            replace
-                        />
-                    }
-                />
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-                <Route
-                    path="/login"
-                    element={<Login />}
-                />
+        {/* Protected Chat Route */}
+        <Route
+          path="/chat"
+          element={
+            <AppLoader>
+              <Chat />
+            </AppLoader>
+          }
+        />
 
-                <Route
-                    path="/register"
-                    element={<Register />}
-                />
-
-                <Route
-                    path="/chat"
-                    element={
-                        <ProtectedRoute>
-                            <Chat />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="*"
-                    element={
-                        <Navigate
-                            to="/login"
-                            replace
-                        />
-                    }
-                />
-
-            </Routes>
-        </BrowserRouter>
-    );
+        {/* Default Redirect */}
+        <Route path="*" element={<Navigate to="/chat" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;

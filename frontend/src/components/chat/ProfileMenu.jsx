@@ -29,16 +29,6 @@ function ProfileMenu({ user }) {
                     👤
                 </div>
 
-                {/* <div>
-                    <h2>
-                        {user?.username || "User"}
-                    </h2>
-
-                    <span>
-                        Online
-                    </span>
-                </div> */}
-
                 <div>
                     <h2>ChatNOVA</h2>
 

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link , useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 
 function Login() {
@@ -12,6 +11,7 @@ function Login() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError("");
 
         try {
             const response = await fetch(
@@ -42,21 +42,20 @@ function Login() {
 
                 navigate("/chat");
             } else {
-                setError(data.message);
+                setError(data.message || "Login failed");
             }
 
         } catch (error) {
             console.error("Login Error:", error);
+            setError("Server error. Please try again.");
         }
     };
 
     return (
         <div className="auth-page">
-
             <div className="auth-card">
-
                 <div className="auth-logo">
-                    <img src="src/assets/favicon2.jpg" alt="favicon" class="logo-img" />
+                    <img src="/favicon.jpg" alt="favicon" className="logo-img" />
                 </div>
 
                 <h1>Welcome Back</h1>
@@ -68,15 +67,6 @@ function Login() {
                 <form onSubmit={handleLogin}>
 
                     <div className="form-group">
-                        {/* <label>Username</label> */}
-                        {/* <input
-                            type="text"
-                            value={username}
-                            onChange={(e) =>
-                                setUsername(e.target.value)
-                            }
-                            placeholder="Enter username"
-                        /> */}
                         <label>Email</label>
                         <input
                             type="email"

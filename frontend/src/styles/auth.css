@@ -42,7 +42,7 @@
 .logo-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;     /* Logo bina distort hue box me fit hoga */
+  object-fit: contain; 
   display: block;
 }
 
