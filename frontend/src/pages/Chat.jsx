@@ -47,7 +47,6 @@ function Chat() {
         ]
     };
 
-    // const user = JSON.parse(localStorage.getItem("user"));
     const storedUser =
         localStorage.getItem("user");
 
@@ -1176,7 +1175,6 @@ function Chat() {
                         onCamera={toggleCamera}
                         onEndCall={endCall}
                     />
-
                 )
             }
             <audio

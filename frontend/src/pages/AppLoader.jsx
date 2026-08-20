@@ -31,8 +31,26 @@ function AppLoader({ children }) {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          localStorage.setItem("user", JSON.stringify({ id: data.userId }));
+          const storedUser =
+            localStorage.getItem("user");
+          let user = {};
+          if (storedUser) {
+            try {
+              user = JSON.parse(storedUser);
+            } catch (error) {
+              console.error(
+                "Failed to parse stored user:",
+                error
+              );
+            }
+          }
+          user.id = data.userId;
+          localStorage.setItem(
+            "user",
+            JSON.stringify(user)
+          );
           setIsAuthenticated(true);
+
         } else {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
@@ -58,17 +76,16 @@ function AppLoader({ children }) {
           </div>
           <h2>ChatNOVA</h2>
 
-          <div class="loader-stage">
-            <div class="center-pin"></div>
-            <div class="loader-spinner"></div>
-            <div class="rope-arm">
-              <div class="rope-line"></div>
+          <div className="loader-stage">
+            <div className="center-pin"></div>
+            <div className="loader-spinner"></div>
+            <div className="rope-arm">
+              <div className="rope-line"></div>
               <div className="loader-logo">
                 <img src="/favicon.jpg" alt="ChatNOVA" className="loader-img" />
               </div>
             </div>
           </div>
-          
           <p>Loading...</p>
         </div>
       </div >
