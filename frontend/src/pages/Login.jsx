@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link , useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 
 function Login() {
@@ -7,12 +7,13 @@ function Login() {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError("");
-
+        setLoading(true);
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/auth/login`,
@@ -48,6 +49,8 @@ function Login() {
         } catch (error) {
             console.error("Login Error:", error);
             setError("Server error. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -99,8 +102,13 @@ function Login() {
                     <button
                         type="submit"
                         className="auth-button"
+                        disabled={loading}
                     >
-                        Login
+                        {loading ? (
+                            <span className="button-spinner"></span>
+                        ) : (
+                            "Login"
+                        )}
                     </button>
 
                 </form>

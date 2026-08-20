@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link , useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 
 function Register() {
@@ -8,6 +8,7 @@ function Register() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     const handleRegister = async (e) => {
@@ -17,7 +18,7 @@ function Register() {
             setError("Passwords do not match");
             return;
         }
-
+        setLoading(true);
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/auth/register`,
@@ -40,6 +41,8 @@ function Register() {
 
         } catch (error) {
             console.error("Registration Error:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -121,8 +124,13 @@ function Register() {
                     <button
                         type="submit"
                         className="auth-button"
+                        disabled={loading}
                     >
-                        Register
+                        {loading ? (
+                            <span className="button-spinner"></span>
+                        ) : (
+                            "Register"
+                        )}
                     </button>
 
                 </form>
