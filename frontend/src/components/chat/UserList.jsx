@@ -1,7 +1,7 @@
 import UserItem from "./UserItem";
 
 function UserList({
-    onlineUsers,
+    displayUsers,
     selectedUser,
     onSelectUser,
     lastMessages,
@@ -11,7 +11,7 @@ function UserList({
     return (
         <div className="user-list">
 
-            {onlineUsers.length === 0 ? (
+            {displayUsers.length === 0 ? (
 
                 <p className="no-users">
                     No users online
@@ -19,12 +19,12 @@ function UserList({
 
             ) : (
 
-                onlineUsers.map((onlineUser) => (
+                displayUsers.map((onlineUser) => (
 
                     <UserItem
                         key={onlineUser.userId}
                         userId={onlineUser.username}
-                        isOnline={true}
+                        isOnline={onlineUser.status === "online"}
                         isSelected={
                             selectedUser === onlineUser.userId
                         }

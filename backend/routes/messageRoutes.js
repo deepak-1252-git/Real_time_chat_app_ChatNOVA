@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const express = require("express");
 const Message = require("../models/Message");
 const protect = require("../middleware/authMiddleware");
@@ -8,6 +9,13 @@ router.get("/:userId", protect, async (req, res) => {
     try {
 
         const { userId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID"
+            });
+        }
 
         const currentUserId = req.user.userId;
 
@@ -23,7 +31,9 @@ router.get("/:userId", protect, async (req, res) => {
                 }
             ]
         })
-            .sort({ createdAt: 1 });
+            .sort({ createdAt: -1 })
+            .limit(50);
+        messages.reverse();
 
         const formattedMessages = messages.map((msg) => ({
             _id: msg._id,

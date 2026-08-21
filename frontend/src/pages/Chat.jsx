@@ -14,6 +14,7 @@ function Chat() {
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchText, setSearchText] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
 
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
@@ -126,13 +127,124 @@ function Chat() {
 
         };
 
-        socket.on("receiveMessage", handleReceiveMessage);
+        const handleMessageSent = (newMessage) => {
+
+            console.log(
+                "Message sent successfully:",
+                newMessage
+            );
+
+            const receiverId =
+                String(newMessage.receiverId);
+
+            setLastMessages((prev) => ({
+                ...prev,
+                [receiverId]: newMessage
+            }));
+
+            if (
+                receiverId ===
+                String(selectedUser)
+            ) {
+
+                setMessages((prevMessages) => [
+                    ...prevMessages,
+                    newMessage
+                ]);
+
+            }
+
+        };
+
+
+        socket.on(
+            "receiveMessage",
+            handleReceiveMessage
+        );
+
+        socket.on(
+            "messageSent",
+            handleMessageSent
+        );
+
 
         return () => {
-            socket.off("receiveMessage", handleReceiveMessage);
+
+            socket.off(
+                "receiveMessage",
+                handleReceiveMessage
+            );
+
+            socket.off(
+                "messageSent",
+                handleMessageSent
+            );
+
         };
 
     }, [selectedUser]);
+
+    useEffect(() => {
+
+        const searchUsers = async () => {
+
+            const query = searchText.trim();
+
+            // Search empty hai → backend call ki zarurat nahi
+            if (!query) {
+                setSearchResults([]);
+                return;
+            }
+
+            try {
+
+                const token = localStorage.getItem("token");
+
+                const response = await fetch(
+                    `${import.meta.env.VITE_API_URL}/api/users/search?q=${encodeURIComponent(query)}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+
+                    setSearchResults(data.users);
+
+                } else {
+
+                    setSearchResults([]);
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "User search failed:",
+                    error
+                );
+
+                setSearchResults([]);
+
+            }
+
+        };
+
+        const timer = setTimeout(
+            searchUsers,
+            300
+        );
+
+        return () => {
+            clearTimeout(timer);
+        };
+
+    }, [searchText]);
 
     const sendMessage = () => {
 
@@ -147,16 +259,9 @@ function Chat() {
             message: messageText
         });
 
-        setLastMessages((prev) => ({
-            ...prev,
-            [String(selectedUser)]: {
-                message: messageText,
-                createdAt: new Date().toISOString()
-            }
-        }));
-
         setMessage("");
     };
+
     const loadMessages = async (userId) => {
 
         try {
@@ -1074,11 +1179,9 @@ function Chat() {
 
     }, []);
 
-    const filteredUsers = onlineUsers.filter((userId) =>
-        String(userId)
-            .toLowerCase()
-            .includes(searchText.toLowerCase())
-    );
+    const displayUsers = searchText.trim()
+        ? searchResults
+        : onlineUsers;
 
     const selectUser = (userId) => {
         setSelectedUser(userId);
@@ -1100,7 +1203,7 @@ function Chat() {
 
             <Sidebar
                 user={user}
-                onlineUsers={onlineUsers}
+                displayUsers={displayUsers}
                 selectedUser={selectedUser}
                 onSelectUser={selectUser}
                 searchText={searchText}

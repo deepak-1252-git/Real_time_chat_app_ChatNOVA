@@ -4,13 +4,15 @@ const router = express.Router();
 
 const {
     getUser,
-    createUser
+    // createUser,
+    searchUsers
 } = require("../controllers/userController");
 
-router.get("/", getUser);
-router.post("/", createUser);
-
 const protect = require("../middleware/authMiddleware");
+
+router.get("/", protect, getUser);
+// router.post("/", protect, createUser);
+router.get("/search", protect, searchUsers);
 
 router.get("/profile", protect, async (req, res) => {
     res.json({

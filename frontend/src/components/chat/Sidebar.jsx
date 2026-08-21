@@ -4,7 +4,7 @@ import UserList from "./UserList";
 
 function Sidebar({
     user,
-    onlineUsers,
+    displayUsers,
     selectedUser,
     onSelectUser,
     searchText,
@@ -25,7 +25,7 @@ function Sidebar({
             />
 
             <UserList
-                onlineUsers={onlineUsers}
+                displayUsers={displayUsers}
                 selectedUser={selectedUser}
                 onSelectUser={onSelectUser}
                 lastMessages={lastMessages}

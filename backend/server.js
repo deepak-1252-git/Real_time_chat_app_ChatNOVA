@@ -21,7 +21,7 @@ const messageRoutes = require("./routes/messageRoutes");
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 5000;
 
 const io = new Server(server, {
     cors: {
@@ -66,9 +66,21 @@ io.on("connection", (socket) => {
 
             onlineUsers.set(userId, socket.id);
 
+            await User.findByIdAndUpdate(
+                userId,
+                {
+                    status: "online"
+                }
+            );
+
             const onlineUserList = [];
 
             for (const [id] of onlineUsers.entries()) {
+
+                // Don't send current user to their own online user list
+                if (String(id) === String(userId)) {
+                    continue;
+                }
 
                 const onlineUser = await User.findById(id)
                     .select("_id username");
@@ -82,7 +94,7 @@ io.on("connection", (socket) => {
 
                 }
             }
-            
+
             io.emit("onlineUsers", onlineUserList);
 
         } catch (error) {
@@ -116,23 +128,33 @@ io.on("connection", (socket) => {
 
             console.log("Message saved:", newMessage._id);
 
-            const receiverSocketId = onlineUsers.get(receiverId);
+            const messageData = {
+                _id: newMessage._id,
+                senderId: socket.userId,
+                receiverId: receiverId,
+                message: newMessage.message,
+                createdAt: newMessage.createdAt
+            };
+
+            // Send message to receiver
+            const receiverSocketId = onlineUsers.get(
+                String(receiverId)
+            );
 
             if (receiverSocketId) {
 
                 io.to(receiverSocketId).emit(
                     "receiveMessage",
-                    {
-                        _id: newMessage._id,
-                        senderId: socket.userId,
-                        receiverId: receiverId,
-                        message: newMessage.message,
-                        createdAt: newMessage.createdAt
-                    }
+                    messageData
                 );
 
             }
 
+            // Send message back to sender
+            socket.emit(
+                "messageSent",
+                messageData
+            );
 
         } catch (error) {
 
@@ -254,6 +276,13 @@ io.on("connection", (socket) => {
                 if (socketId === socket.id) {
 
                     onlineUsers.delete(userId);
+
+                    await User.findByIdAndUpdate(
+                        userId,
+                        {
+                            status: "offline"
+                        }
+                    );
 
                     console.log(
                         "User went offline:",
