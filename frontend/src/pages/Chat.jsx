@@ -127,32 +127,44 @@ function Chat() {
 
         };
 
-        const handleMessageSent = (newMessage) => {
+        const handleMessageSent = (savedMessage) => {
 
             console.log(
-                "Message sent successfully:",
-                newMessage
+                "Message saved successfully:",
+                savedMessage
             );
 
-            const receiverId =
-                String(newMessage.receiverId);
-
-            setLastMessages((prev) => ({
-                ...prev,
-                [receiverId]: newMessage
-            }));
-
+            // Agar isi user ke saath current chat open hai
             if (
-                receiverId ===
+                String(savedMessage.receiverId) ===
                 String(selectedUser)
             ) {
 
-                setMessages((prevMessages) => [
-                    ...prevMessages,
-                    newMessage
-                ]);
+                setMessages((prevMessages) => {
+                    const alreadyExists = prevMessages.some(
+                        (msg) =>
+                            String(msg._id) ===
+                            String(savedMessage._id)
+                    );
+
+                    if (alreadyExists) {
+                        return prevMessages;
+                    }
+
+                    return [
+                        ...prevMessages,
+                        savedMessage
+                    ];
+
+                });
 
             }
+
+            // Last message update
+            setLastMessages((prev) => ({
+                ...prev,
+                [String(savedMessage.receiverId)]: savedMessage
+            }));
 
         };
 

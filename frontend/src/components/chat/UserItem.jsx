@@ -51,10 +51,8 @@ function UserItem({
 
                     <span className="last-message">
 
-                        {lastMessage?.message ||
-                            (isOnline
-                                ? "Online"
-                                : "Offline")}
+                        {/* {lastMessage?.message || (isOnline ? "Online" : "Offline")} */}
+                        {lastMessage?.message || (isOnline ? "Offline" : "Online")}
 
                     </span>
 

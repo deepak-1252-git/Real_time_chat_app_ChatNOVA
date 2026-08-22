@@ -1,4 +1,4 @@
- function ChatHeader({
+function ChatHeader({
     headerUsername,
     selectedUser,
     isOnline,
@@ -50,16 +50,18 @@
 
                 <button
                     type="button"
-                    title="Audio Call"
+                    title={isOnline ? "Audio Call" : "User is offline"}
                     onClick={onAudioCall}
+                    disabled={!isOnline}
                 >
                     📞
                 </button>
 
                 <button
                     type="button"
-                    title="Video Call"
+                    title={isOnline ? "Video Call" : "User is offline"}
                     onClick={onVideoCall}
+                    disabled={!isOnline}
                 >
                     📹
                 </button>

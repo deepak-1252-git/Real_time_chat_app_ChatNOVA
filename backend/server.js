@@ -128,6 +128,14 @@ io.on("connection", (socket) => {
 
             console.log("Message saved:", newMessage._id);
 
+            socket.emit("messageSent", {
+                _id: newMessage._id,
+                senderId: socket.userId,
+                receiverId: receiverId,
+                message: newMessage.message,
+                createdAt: newMessage.createdAt
+            });
+
             const messageData = {
                 _id: newMessage._id,
                 senderId: socket.userId,

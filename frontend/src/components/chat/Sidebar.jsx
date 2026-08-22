@@ -30,6 +30,7 @@ function Sidebar({
                 onSelectUser={onSelectUser}
                 lastMessages={lastMessages}
                 unreadCounts={unreadCounts}
+                // currentUserId={user?.id}
             />
         </aside>
     );
