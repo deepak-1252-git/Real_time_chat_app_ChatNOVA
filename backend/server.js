@@ -58,13 +58,31 @@ io.on("connection", (socket) => {
 
     console.log("Socket connected:", socket.id);
 
+    socket.on("activeChat", ({ userId }) => {
+
+        socket.activeChat = userId
+            ? String(userId)
+            : null;
+
+        console.log(
+            "Active chat:",
+            socket.userId,
+            "→",
+            socket.activeChat
+        );
+
+    });
+
     socket.on("userConnected", async (userId) => {
 
         try {
 
-            socket.userId = userId;
+            socket.userId = String(userId);
 
-            onlineUsers.set(userId, socket.id);
+            onlineUsers.set(
+                String(userId),
+                socket.id
+            );
 
             await User.findByIdAndUpdate(
                 userId,
@@ -73,14 +91,10 @@ io.on("connection", (socket) => {
                 }
             );
 
+            // Get all currently online users
             const onlineUserList = [];
 
             for (const [id] of onlineUsers.entries()) {
-
-                // Don't send current user to their own online user list
-                if (String(id) === String(userId)) {
-                    continue;
-                }
 
                 const onlineUser = await User.findById(id)
                     .select("_id username");
@@ -88,14 +102,30 @@ io.on("connection", (socket) => {
                 if (onlineUser) {
 
                     onlineUserList.push({
-                        userId: onlineUser._id,
+                        userId: String(onlineUser._id),
                         username: onlineUser.username
                     });
 
                 }
+
             }
 
-            io.emit("onlineUsers", onlineUserList);
+            // Send personalized list to every connected user
+            for (const [onlineUserId, socketId] of onlineUsers.entries()) {
+
+                const usersForThisSocket =
+                    onlineUserList.filter(
+                        (onlineUser) =>
+                            String(onlineUser.userId) !==
+                            String(onlineUserId)
+                    );
+
+                io.to(socketId).emit(
+                    "onlineUsers",
+                    usersForThisSocket
+                );
+
+            }
 
         } catch (error) {
 
@@ -119,11 +149,23 @@ io.on("connection", (socket) => {
             if (!receiverId || !message?.trim()) {
                 return;
             }
+            // Send message to receiver
+            const receiverSocketId = onlineUsers.get(String(receiverId));
+
+            const receiverSocket = receiverSocketId
+                ? io.sockets.sockets.get(receiverSocketId)
+                : null;
+
+            const isReceiverInChat =
+                receiverSocket &&
+                String(receiverSocket.activeChat) ===
+                String(socket.userId);
 
             const newMessage = await Message.create({
                 sender: socket.userId,
                 receiver: receiverId,
-                message: message.trim()
+                message: message.trim(),
+                isRead: Boolean(isReceiverInChat)
             });
 
             console.log("Message saved:", newMessage._id);
@@ -143,11 +185,6 @@ io.on("connection", (socket) => {
                 message: newMessage.message,
                 createdAt: newMessage.createdAt
             };
-
-            // Send message to receiver
-            const receiverSocketId = onlineUsers.get(
-                String(receiverId)
-            );
 
             if (receiverSocketId) {
 
@@ -279,9 +316,16 @@ io.on("connection", (socket) => {
 
         try {
 
-            for (const [userId, socketId] of onlineUsers.entries()) {
+            let disconnectedUserId = null;
+
+            for (
+                const [userId, socketId]
+                of onlineUsers.entries()
+            ) {
 
                 if (socketId === socket.id) {
+
+                    disconnectedUserId = userId;
 
                     onlineUsers.delete(userId);
 
@@ -301,6 +345,7 @@ io.on("connection", (socket) => {
                 }
             }
 
+            // Get remaining online users
             const onlineUserList = [];
 
             for (const [id] of onlineUsers.entries()) {
@@ -311,17 +356,30 @@ io.on("connection", (socket) => {
                 if (onlineUser) {
 
                     onlineUserList.push({
-                        userId: onlineUser._id,
+                        userId: String(onlineUser._id),
                         username: onlineUser.username
                     });
 
                 }
+
             }
 
-            io.emit(
-                "onlineUsers",
-                onlineUserList
-            );
+            // Send personalized list to each remaining user
+            for (const [onlineUserId, socketId] of onlineUsers.entries()) {
+
+                const usersForThisSocket =
+                    onlineUserList.filter(
+                        (onlineUser) =>
+                            String(onlineUser.userId) !==
+                            String(onlineUserId)
+                    );
+
+                io.to(socketId).emit(
+                    "onlineUsers",
+                    usersForThisSocket
+                );
+
+            }
 
         } catch (error) {
 
@@ -333,7 +391,6 @@ io.on("connection", (socket) => {
         }
 
     });
-
 });
 
 server.listen(PORT, () => {

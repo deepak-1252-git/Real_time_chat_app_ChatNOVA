@@ -346,6 +346,51 @@ function Chat() {
 
     useEffect(() => {
 
+        const loadUnreadCounts = async () => {
+
+            try {
+
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    return;
+                }
+
+                const response = await fetch(
+                    `${import.meta.env.VITE_API_URL}/api/messages/unread`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+
+                    setUnreadCounts(data.unreadCounts || {});
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to load unread counts:",
+                    error
+                );
+
+            }
+
+        };
+
+        loadUnreadCounts();
+
+    }, []);
+
+    useEffect(() => {
+
         const handleIncomingCall = (callData) => {
 
             console.log(
@@ -1240,6 +1285,11 @@ function Chat() {
     const selectUser = async (userId) => {
 
         setSelectedUser(userId);
+
+        socket.emit("activeChat", {
+            userId
+        });
+
         setMessages([]);
 
         try {
@@ -1271,11 +1321,16 @@ function Chat() {
         }));
 
         await loadMessages(userId);
-        
+
         setShowChat(true);
     };
 
     const handleBackToSidebar = () => {
+
+        socket.emit("activeChat", {
+            userId: null
+        });
+
         setShowChat(false);
     };
 
