@@ -1,5 +1,5 @@
 function UserItem({
-    userId,
+    username,
     isOnline,
     isSelected,
     lastMessage,
@@ -36,7 +36,7 @@ function UserItem({
                 <div className="user-top-row">
 
                     <h4>
-                        {userId}
+                        {username}
                     </h4>
 
                     <span className="last-time">

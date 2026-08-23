@@ -23,10 +23,10 @@ function UserList({
 
                     <UserItem
                         key={onlineUser.userId}
-                        userId={onlineUser.username}
+                        username={onlineUser.username}
                         isOnline={onlineUser.status === "online"}
                         isSelected={
-                            selectedUser === onlineUser.userId
+                            String(selectedUser) === String(onlineUser.userId)
                         }
                         lastMessage={
                             lastMessages[onlineUser.userId]

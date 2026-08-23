@@ -77,6 +77,8 @@ function Chat() {
         console.log("Socket connected:", socket.id);
         socket.emit("userConnected", user.id);
 
+        loadUnreadCounts();
+
         socket.on("onlineUsers", (users) => {
 
             setOnlineUsers(users);
@@ -300,6 +302,41 @@ function Chat() {
 
             console.error(
                 "Failed to load messages:",
+                error
+            );
+
+        }
+
+    };
+
+    const loadUnreadCounts = async () => {
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/api/messages/unread`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+
+                setUnreadCounts(data.unreadCounts);
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load unread counts:",
                 error
             );
 
@@ -1191,18 +1228,50 @@ function Chat() {
 
     }, []);
 
-    const displayUsers = searchText.trim()
-        ? searchResults
-        : onlineUsers;
+    const displayUsers = (
+        searchText.trim()
+            ? searchResults
+            : onlineUsers
+    ).filter(
+        (onlineUser) =>
+            String(onlineUser.userId) !== String(user?.id)
+    );
 
-    const selectUser = (userId) => {
+    const selectUser = async (userId) => {
+
         setSelectedUser(userId);
         setMessages([]);
-        loadMessages(userId);
+
+        try {
+
+            const token = localStorage.getItem("token");
+
+            await fetch(
+                `${import.meta.env.VITE_API_URL}/api/messages/read/${userId}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to mark messages as read:",
+                error
+            );
+
+        }
+
         setUnreadCounts((prev) => ({
             ...prev,
             [userId]: 0
         }));
+
+        await loadMessages(userId);
+        
         setShowChat(true);
     };
 
