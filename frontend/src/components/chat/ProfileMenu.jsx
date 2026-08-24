@@ -30,10 +30,11 @@ function ProfileMenu({ user }) {
                 </div>
 
                 <div>
-                    <h2>ChatNOVA</h2>
-
-                    <span>
+                    <h2>
                         {user?.username || "My Account"}
+                    </h2>
+                    <span>
+                        ChatNOVA
                     </span>
                 </div>
 

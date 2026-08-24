@@ -77,12 +77,23 @@ io.on("connection", (socket) => {
 
         try {
 
-            socket.userId = String(userId);
+            const userKey = String(userId);
 
-            onlineUsers.set(
-                String(userId),
-                socket.id
-            );
+            socket.userId = userKey;
+
+            if (!onlineUsers.has(userKey)) {
+
+                onlineUsers.set(
+                    userKey,
+                    new Set()
+                );
+
+            }
+
+            onlineUsers
+                .get(userKey)
+                .add(socket.id);
+
 
             await User.findByIdAndUpdate(
                 userId,
@@ -91,41 +102,7 @@ io.on("connection", (socket) => {
                 }
             );
 
-            // Get all currently online users
-            const onlineUserList = [];
-
-            for (const [id] of onlineUsers.entries()) {
-
-                const onlineUser = await User.findById(id)
-                    .select("_id username");
-
-                if (onlineUser) {
-
-                    onlineUserList.push({
-                        userId: String(onlineUser._id),
-                        username: onlineUser.username
-                    });
-
-                }
-
-            }
-
-            // Send personalized list to every connected user
-            for (const [onlineUserId, socketId] of onlineUsers.entries()) {
-
-                const usersForThisSocket =
-                    onlineUserList.filter(
-                        (onlineUser) =>
-                            String(onlineUser.userId) !==
-                            String(onlineUserId)
-                    );
-
-                io.to(socketId).emit(
-                    "onlineUsers",
-                    usersForThisSocket
-                );
-
-            }
+            await sendOnlineUsers();
 
         } catch (error) {
 
@@ -316,70 +293,50 @@ io.on("connection", (socket) => {
 
         try {
 
-            let disconnectedUserId = null;
+            const userId = socket.userId;
 
-            for (
-                const [userId, socketId]
-                of onlineUsers.entries()
-            ) {
-
-                if (socketId === socket.id) {
-
-                    disconnectedUserId = userId;
-
-                    onlineUsers.delete(userId);
-
-                    await User.findByIdAndUpdate(
-                        userId,
-                        {
-                            status: "offline"
-                        }
-                    );
-
-                    console.log(
-                        "User went offline:",
-                        userId
-                    );
-
-                    break;
-                }
+            if (!userId) {
+                return;
             }
 
-            // Get remaining online users
-            const onlineUserList = [];
+            const socketSet =
+                onlineUsers.get(userId);
 
-            for (const [id] of onlineUsers.entries()) {
-
-                const onlineUser = await User.findById(id)
-                    .select("_id username");
-
-                if (onlineUser) {
-
-                    onlineUserList.push({
-                        userId: String(onlineUser._id),
-                        username: onlineUser.username
-                    });
-
-                }
-
+            if (!socketSet) {
+                return;
             }
 
-            // Send personalized list to each remaining user
-            for (const [onlineUserId, socketId] of onlineUsers.entries()) {
+            socketSet.delete(socket.id);
 
-                const usersForThisSocket =
-                    onlineUserList.filter(
-                        (onlineUser) =>
-                            String(onlineUser.userId) !==
-                            String(onlineUserId)
-                    );
+            // User still has another active connection
+            if (socketSet.size > 0) {
 
-                io.to(socketId).emit(
-                    "onlineUsers",
-                    usersForThisSocket
+                console.log(
+                    "User still online:",
+                    userId
                 );
 
+                await sendOnlineUsers();
+
+                return;
             }
+
+            // No active sockets remaining
+            onlineUsers.delete(userId);
+
+            await User.findByIdAndUpdate(
+                userId,
+                {
+                    status: "offline"
+                }
+            );
+
+            console.log(
+                "User went offline:",
+                userId
+            );
+
+            await sendOnlineUsers();
 
         } catch (error) {
 
@@ -391,7 +348,63 @@ io.on("connection", (socket) => {
         }
 
     });
+
+
 });
+
+const sendOnlineUsers = async () => {
+
+    try {
+
+        const onlineUserIds = [
+            ...onlineUsers.keys()
+        ];
+
+        const onlineUsersData = await User.find({
+            _id: {
+                $in: onlineUserIds
+            }
+        }).select("_id username");
+
+        const onlineUserList =
+            onlineUsersData.map((user) => ({
+                userId: String(user._id),
+                username: user.username
+            }));
+
+        for (
+            const [onlineUserId, socketIds]
+            of onlineUsers.entries()
+        ) {
+
+            const usersForThisSocket =
+                onlineUserList.filter(
+                    (onlineUser) =>
+                        String(onlineUser.userId) !==
+                        String(onlineUserId)
+                );
+
+            for (const socketId of socketIds) {
+
+                io.to(socketId).emit(
+                    "onlineUsers",
+                    usersForThisSocket
+                );
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Send online users error:",
+            error
+        );
+
+    }
+
+};
 
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)

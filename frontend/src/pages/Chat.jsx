@@ -68,28 +68,75 @@ function Chat() {
     );
     const callerUsername = callerUserData?.username || caller;
 
+
     useEffect(() => {
 
         if (!user?.id) {
             return;
         }
 
-        console.log("Socket connected:", socket.id);
-        socket.emit("userConnected", user.id);
+        const handleConnect = () => {
 
-        loadUnreadCounts();
-
-        socket.on("onlineUsers", (users) => {
-
-            setOnlineUsers(users);
-
-        });
-
-        return () => {
-            socket.off("onlineUsers");
+            console.log(
+                "Socket connected:",
+                socket.id
+            );
+            socket.emit(
+                "userConnected",
+                user.id
+            );
         };
 
-    }, []);
+        const handleOnlineUsers = (users) => {
+
+            console.log(
+                "Online users updated:",
+                users
+            );
+            setOnlineUsers(users);
+        };
+
+        const handleDisconnect = (reason) => {
+
+            console.log(
+                "Socket disconnected:",
+                reason
+            );
+        };
+
+        socket.on(
+            "connect",
+            handleConnect
+        );
+        socket.on(
+            "disconnect",
+            handleDisconnect
+        );
+        socket.on(
+            "onlineUsers",
+            handleOnlineUsers
+        );
+        // Agar socket already connected hai
+        if (socket.connected) {
+            handleConnect();
+        }
+
+        return () => {
+
+            socket.off(
+                "connect",
+                handleConnect
+            );
+            socket.off(
+                "disconnect",
+                handleDisconnect
+            );
+            socket.off(
+                "onlineUsers",
+                handleOnlineUsers
+            );
+        };
+    }, [user?.id]);
 
     useEffect(() => {
 
