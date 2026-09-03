@@ -1,3 +1,6 @@
+import useChatSocket from "../hooks/useChatSocket";
+import useWebRTC from "../hooks/useWebRTC";
+
 import Sidebar from "../components/chat/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
 import CallingOverlay from "../components/chat/calls/CallingOverlay";
@@ -7,136 +10,26 @@ import VideoCall from "../components/chat/calls/VideoCall";
 import "../styles/chat.css";
 
 
-import { useEffect, useRef, useState } from "react";
-import socket from "../socket";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function Chat() {
-    const [onlineUsers, setOnlineUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchText, setSearchText] = useState("");
     const [searchResults, setSearchResults] = useState([]);
-
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [lastMessages, setLastMessages] = useState({});
     const [unreadCounts, setUnreadCounts] = useState({});
-
     const [showChat, setShowChat] = useState(false);
 
-    const [callType, setCallType] = useState(null);
-    const [callStatus, setCallStatus] = useState("idle");
-    const [caller, setCaller] = useState(null);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isCameraOff, setIsCameraOff] = useState(false);
-
     const messagesEndRef = useRef(null);
-
-    const peerConnectionRef = useRef(null);
-    const localStreamRef = useRef(null);
-    const remoteStreamRef = useRef(null);
-    const remoteOfferRef = useRef(null);
     const remoteAudioRef = useRef(null);
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
-    const pendingIceCandidatesRef = useRef([]);
 
-    const rtcConfig = {
-        iceServers: [
-            {
-                urls: "stun:stun.l.google.com:19302"
-            }
-        ]
-    };
-
-    const storedUser =
-        localStorage.getItem("user");
-
-    const user = storedUser
-        ? JSON.parse(storedUser)
-        : null;
-
-    const selectedUserData = onlineUsers.find(
-        (user) =>
-            String(user.userId) ===
-            String(selectedUser));
-    const selectedUsername = selectedUserData?.username || selectedUser;
-
-    const callerUserData = onlineUsers.find(
-        (onlineUser) =>
-            String(onlineUser.userId) ===
-            String(caller)
-    );
-    const callerUsername = callerUserData?.username || caller;
-
-
-    useEffect(() => {
-
-        if (!user?.id) {
-            return;
-        }
-
-        const handleConnect = () => {
-
-            console.log(
-                "Socket connected:",
-                socket.id
-            );
-            socket.emit(
-                "userConnected",
-                user.id
-            );
-        };
-
-        const handleOnlineUsers = (users) => {
-
-            console.log(
-                "Online users updated:",
-                users
-            );
-            setOnlineUsers(users);
-        };
-
-        const handleDisconnect = (reason) => {
-
-            console.log(
-                "Socket disconnected:",
-                reason
-            );
-        };
-
-        socket.on(
-            "connect",
-            handleConnect
-        );
-        socket.on(
-            "disconnect",
-            handleDisconnect
-        );
-        socket.on(
-            "onlineUsers",
-            handleOnlineUsers
-        );
-        // Agar socket already connected hai
-        if (socket.connected) {
-            handleConnect();
-        }
-
-        return () => {
-
-            socket.off(
-                "connect",
-                handleConnect
-            );
-            socket.off(
-                "disconnect",
-                handleDisconnect
-            );
-            socket.off(
-                "onlineUsers",
-                handleOnlineUsers
-            );
-        };
-    }, [user?.id]);
+    // ---------------------------------------------------------
+    const storedUser = localStorage.getItem("user");
+    const user = storedUser ? JSON.parse(storedUser) : null;
 
     useEffect(() => {
 
@@ -146,9 +39,11 @@ function Chat() {
 
     }, [messages]);
 
-    useEffect(() => {
-
-        const handleReceiveMessage = (newMessage) => {
+    // -----------------------------------------------------
+    //      useChatsocket
+    // -----------------------------------------------------
+    const handleReceiveMessage = useCallback(
+        (newMessage) => {
 
             console.log("New message:", newMessage);
 
@@ -174,9 +69,12 @@ function Chat() {
                 [senderId]: (prev[senderId] || 0) + 1
             }));
 
-        };
+        },
+        [selectedUser]
+    );
 
-        const handleMessageSent = (savedMessage) => {
+    const handleMessageSent = useCallback(
+        (savedMessage) => {
 
             console.log(
                 "Message saved successfully:",
@@ -215,35 +113,117 @@ function Chat() {
                 [String(savedMessage.receiverId)]: savedMessage
             }));
 
-        };
+        },
+        [selectedUser]
+    );
+
+    const {
+        onlineUsers,
+        sendMessage: sendSocketMessage,
+        callUser: sendCallUser,
+        acceptCall: sendCallAccepted,
+        sendIceCandidate,
+        endCall: sendSocketEndCall,
+        setActiveChat,
+        setCallHandlers
+    } = useChatSocket(
+        user?.id,
+        {
+            onReceiveMessage: handleReceiveMessage,
+            onMessageSent: handleMessageSent,
+
+        }
+    );
+
+    // --------------------------------------------------------------------
+    //          useWebRTC
+    // --------------------------------------------------------------------
 
 
-        socket.on(
-            "receiveMessage",
-            handleReceiveMessage
-        );
+    const {
+        peerConnectionRef,
+        localStreamRef,
+        remoteStreamRef,
+        remoteOfferRef,
+        pendingIceCandidatesRef,
 
-        socket.on(
-            "messageSent",
-            handleMessageSent
-        );
+        callType,
+        setCallType,
 
+        callStatus,
+        setCallStatus,
 
-        return () => {
+        caller,
+        setCaller,
 
-            socket.off(
-                "receiveMessage",
-                handleReceiveMessage
-            );
+        isMuted,
+        setIsMuted,
 
-            socket.off(
-                "messageSent",
-                handleMessageSent
-            );
+        isCameraOff,
+        setIsCameraOff,
 
-        };
+        createPeerConnection,
+        getMicrophoneStream,
+        getVideoStream,
+        createAudioOffer,
+        createAudioAnswer,
 
-    }, [selectedUser]);
+        handleCallAnswered,
+        handleRemoteIceCandidate,
+        handleCallEnded
+    } = useWebRTC({
+        sendCallUser,
+        sendCallAccepted,
+        sendIceCandidate,
+        sendSocketEndCall
+    });
+
+    // --------------------------------------------------------------------
+    // 
+    // --------------------------------------------------------------------
+
+    useEffect(() => {
+        setCallHandlers({
+            onIncomingCall: (callData) => {
+                remoteOfferRef.current = callData.offer;
+
+                setCaller(callData.callerId);
+                setCallType(callData.callType);
+                setCallStatus("incoming");
+            },
+
+            onCallAnswered: handleCallAnswered,
+
+            onIceCandidate: handleRemoteIceCandidate,
+
+            onCallEnded: handleCallEnded
+        });
+    }, [
+        setCallHandlers,
+        handleCallAnswered,
+        handleRemoteIceCandidate,
+        handleCallEnded
+    ]);
+
+    // --------------------------------------------------------------------
+    // 
+    // --------------------------------------------------------------------
+
+    const selectedUserData = onlineUsers.find(
+        (user) =>
+            String(user.userId) ===
+            String(selectedUser));
+
+    const selectedUsername = selectedUserData?.username || selectedUser;
+
+    const callerUserData = onlineUsers.find(
+        (onlineUser) =>
+            String(onlineUser.userId) ===
+            String(caller)
+    );
+
+    const callerUsername = callerUserData?.username || caller;
+
 
     useEffect(() => {
 
@@ -315,10 +295,10 @@ function Chat() {
 
         const messageText = message.trim();
 
-        socket.emit("sendMessage", {
-            receiverId: selectedUser,
-            message: messageText
-        });
+        sendSocketMessage(
+            selectedUser,
+            messageText
+        );
 
         setMessage("");
     };
@@ -436,38 +416,6 @@ function Chat() {
 
     }, []);
 
-    useEffect(() => {
-
-        const handleIncomingCall = (callData) => {
-
-            console.log(
-                "Incoming call:",
-                callData
-            );
-
-            remoteOfferRef.current = callData.offer;
-
-            setCaller(callData.callerId);
-            setCallType(callData.callType);
-            setCallStatus("incoming");
-
-        };
-
-        socket.on(
-            "incomingCall",
-            handleIncomingCall
-        );
-
-        return () => {
-
-            socket.off(
-                "incomingCall",
-                handleIncomingCall
-            );
-
-        };
-
-    }, []);
 
     const startAudioCall = async () => {
 
@@ -525,7 +473,7 @@ function Chat() {
         setCallType("audio");
         setCallStatus("calling");
 
-        socket.emit("callUser", {
+        sendCallUser({
             receiverId: selectedUser,
             callerId: user.id,
             callType: "audio",
@@ -587,7 +535,7 @@ function Chat() {
         setCallType("video");
         setCallStatus("calling");
 
-        socket.emit("callUser", {
+        sendCallUser({
             receiverId: selectedUser,
             callerId: user.id,
             callType: "video",
@@ -598,121 +546,6 @@ function Chat() {
             "Video call offer sent to:",
             selectedUser
         );
-    };
-
-    const createPeerConnection = (targetUserId) => {
-
-        const peerConnection =
-            new RTCPeerConnection(rtcConfig);
-
-        peerConnectionRef.current =
-            peerConnection;
-
-        peerConnection.onicecandidate = (event) => {
-
-            if (!event.candidate) {
-                return;
-            }
-
-            console.log(
-                "Local ICE candidate:",
-                event.candidate
-            );
-
-            socket.emit("iceCandidate", {
-                targetUserId,
-                candidate: event.candidate
-            });
-
-        };
-        // REMOTE AUDIO + VIDEO
-        peerConnection.ontrack = (event) => {
-
-            const remoteStream =
-                event.streams[0];
-
-            console.log(
-                "🔥 REMOTE STREAM RECEIVED:",
-                remoteStream
-            );
-
-            console.log(
-                "Remote video tracks:",
-                remoteStream.getVideoTracks()
-            );
-
-            console.log(
-                "Remote audio tracks:",
-                remoteStream.getAudioTracks()
-            );
-
-            remoteStreamRef.current = remoteStream;
-
-            // Remote audio
-            if (remoteAudioRef.current) {
-
-                remoteAudioRef.current.srcObject =
-                    remoteStream;
-
-            }
-            // Remote video
-            if (remoteVideoRef.current) {
-
-                remoteVideoRef.current.srcObject =
-                    remoteStream;
-
-            }
-        };
-
-        peerConnection.onconnectionstatechange = () => {
-
-            console.log(
-                "WebRTC connection state:",
-                peerConnection.connectionState
-            );
-
-        };
-
-        console.log(
-            "WebRTC PeerConnection created"
-        );
-
-
-        return peerConnection;
-    };
-
-    const getMicrophoneStream = async () => {
-
-        try {
-
-            const stream =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: false
-                });
-
-            localStreamRef.current = stream;
-
-            console.log(
-                "Microphone access granted"
-            );
-
-            console.log(
-                "Audio tracks:",
-                stream.getAudioTracks()
-            );
-
-            return stream;
-
-        } catch (error) {
-
-            console.error(
-                "Microphone access failed:",
-                error
-            );
-
-            return null;
-        }
     };
 
     useEffect(() => {
@@ -764,54 +597,6 @@ function Chat() {
 
     }, [callStatus, callType]);
 
-    const getVideoStream = async () => {
-
-        try {
-
-            const stream =
-                await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: true
-                });
-
-            localStreamRef.current = stream;
-
-            console.log("VIDEO STREAM:", stream);
-
-            console.log(
-                "VIDEO TRACKS:",
-                stream.getVideoTracks()
-            );
-
-            if (localVideoRef.current) {
-
-                localVideoRef.current.srcObject =
-                    stream;
-
-                console.log(
-                    "Local video stream attached"
-                );
-
-            } else {
-
-                console.log(
-                    "❌ localVideoRef is NULL"
-                );
-            }
-
-            return stream;
-
-        } catch (error) {
-
-            console.error(
-                "Camera + microphone access failed:",
-                error
-            );
-
-            return null;
-        }
-    };
-
     const toggleCamera = () => {
 
         const stream = localStreamRef.current;
@@ -832,105 +617,6 @@ function Chat() {
 
         setIsCameraOff(!videoTrack.enabled);
 
-    };
-
-    const createAudioOffer = async (peerConnection) => {
-
-        try {
-
-            const offer =
-                await peerConnection.createOffer();
-
-            await peerConnection.setLocalDescription(
-                offer
-            );
-
-            console.log(
-                "WebRTC offer created:",
-                offer
-            );
-
-            return offer;
-
-        } catch (error) {
-
-            console.error(
-                "Failed to create WebRTC offer:",
-                error
-            );
-
-            return null;
-        }
-    };
-
-    const createAudioAnswer = async (
-        peerConnection,
-        offer
-    ) => {
-
-        try {
-
-            await peerConnection.setRemoteDescription(
-                new RTCSessionDescription(offer)
-            );
-
-            console.log(
-                "Remote offer set successfully"
-            );
-
-            const pendingCandidates =
-                pendingIceCandidatesRef.current;
-
-            for (
-                const candidate of pendingCandidates
-            ) {
-
-                try {
-
-                    await peerConnection.addIceCandidate(
-                        new RTCIceCandidate(candidate)
-                    );
-
-                    console.log(
-                        "Queued ICE candidate added"
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Failed to add queued ICE candidate:",
-                        error
-                    );
-
-                }
-
-            }
-
-            pendingIceCandidatesRef.current = [];
-
-            const answer =
-                await peerConnection.createAnswer();
-
-            await peerConnection.setLocalDescription(
-                answer
-            );
-
-            console.log(
-                "WebRTC answer created:",
-                answer
-            );
-
-            return answer;
-
-        } catch (error) {
-
-            console.error(
-                "Failed to create WebRTC answer:",
-                error
-            );
-
-            return null;
-        }
     };
 
     const acceptAudioCall = async () => {
@@ -980,7 +666,7 @@ function Chat() {
             return;
         }
 
-        socket.emit("callAccepted", {
+        sendCallAccepted({
             callerId: caller,
             answer
         });
@@ -1046,7 +732,7 @@ function Chat() {
                 answer
             );
 
-            socket.emit("callAccepted", {
+            sendCallAccepted({
                 callerId: caller,
                 answer
             });
@@ -1066,134 +752,6 @@ function Chat() {
 
         }
     };
-
-    useEffect(() => {
-
-        const handleCallAnswered = async ({
-            answer
-        }) => {
-
-            console.log(
-                "Received WebRTC answer:",
-                answer
-            );
-
-            const peerConnection =
-                peerConnectionRef.current;
-
-            if (!peerConnection) {
-
-                console.error(
-                    "PeerConnection not found"
-                );
-
-                return;
-            }
-
-            try {
-
-                await peerConnection.setRemoteDescription(
-                    new RTCSessionDescription(answer)
-                );
-
-                console.log(
-                    "Remote answer set successfully"
-                );
-
-                setCallStatus("connected");
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to set remote answer:",
-                    error
-                );
-
-            }
-
-        };
-
-        socket.on(
-            "callAnswered",
-            handleCallAnswered
-        );
-
-        return () => {
-
-            socket.off(
-                "callAnswered",
-                handleCallAnswered
-            );
-
-        };
-
-    }, []);
-
-    useEffect(() => {
-
-        const handleRemoteIceCandidate = async ({
-            candidate
-        }) => {
-            console.log(
-                "Received remote ICE candidate:",
-                candidate
-            );
-            const peerConnection =
-                peerConnectionRef.current;
-
-            if (!peerConnection) {
-                console.log(
-                    "PeerConnection not ready. Queueing ICE candidate."
-                );
-                pendingIceCandidatesRef.current.push(
-                    candidate
-                );
-                return;
-            }
-
-            if (
-                !peerConnection.remoteDescription
-            ) {
-                console.log(
-                    "Remote description not ready. Queueing ICE candidate."
-                );
-                pendingIceCandidatesRef.current.push(
-                    candidate
-                );
-                return;
-            }
-
-            try {
-                await peerConnection.addIceCandidate(
-                    new RTCIceCandidate(candidate)
-                );
-                console.log(
-                    "Remote ICE candidate added"
-                );
-            } catch (error) {
-
-                console.error(
-                    "Failed to add remote ICE candidate:",
-                    error
-                );
-            }
-        };
-
-        socket.on(
-            "iceCandidate",
-            handleRemoteIceCandidate
-        );
-
-        return () => {
-
-            socket.off(
-                "iceCandidate",
-                handleRemoteIceCandidate
-            );
-
-        };
-
-    }, []);
 
     const toggleMute = () => {
 
@@ -1222,103 +780,57 @@ function Chat() {
         );
     };
 
-    const endCall = () => {
+    const endCall = (targetUserId) => {
 
-        console.log("Ending call");
+    console.log("Ending call:", targetUserId);
 
-        if (localStreamRef.current) {
+    const targetId =
+        targetUserId !== null &&
+        targetUserId !== undefined
+            ? String(targetUserId)
+            : null;
 
-            localStreamRef.current
-                .getTracks()
-                .forEach((track) => {
-                    track.stop();
-                });
+    if (localStreamRef.current) {
+        localStreamRef.current
+            .getTracks()
+            .forEach((track) => track.stop());
 
-            localStreamRef.current = null;
-        }
+        localStreamRef.current = null;
+    }
 
-        if (peerConnectionRef.current) {
+    if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+    }
 
-            peerConnectionRef.current.close();
+    remoteStreamRef.current = null;
 
-            peerConnectionRef.current = null;
-        }
+    if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = null;
+    }
 
-        if (remoteAudioRef.current) {
+    if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+    }
 
-            remoteAudioRef.current.srcObject = null;
-        }
+    if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+    }
 
-        if (selectedUser) {
+    remoteOfferRef.current = null;
+    pendingIceCandidatesRef.current = [];
 
-            socket.emit("endCall", {
-                targetUserId: selectedUser
-            });
+    setCallStatus("idle");
+    setCallType(null);
+    setCaller(null);
+    setIsMuted(false);
+    setIsCameraOff(false);
 
-        }
-
-        setCallStatus("idle");
-        setCallType(null);
-        setCaller(null);
-        setIsMuted(false);
-
-        remoteOfferRef.current = null;
-    };
-
-    useEffect(() => {
-
-        const handleCallEnded = () => {
-
-            console.log(
-                "Call ended by other user"
-            );
-
-            if (localStreamRef.current) {
-
-                localStreamRef.current
-                    .getTracks()
-                    .forEach((track) => {
-                        track.stop();
-                    });
-
-                localStreamRef.current = null;
-            }
-
-            if (peerConnectionRef.current) {
-
-                peerConnectionRef.current.close();
-
-                peerConnectionRef.current = null;
-            }
-
-            if (remoteAudioRef.current) {
-
-                remoteAudioRef.current.srcObject = null;
-            }
-
-            setCallStatus("idle");
-            setCallType(null);
-            setCaller(null);
-            setIsMuted(false);
-
-            remoteOfferRef.current = null;
-        };
-
-        socket.on(
-            "callEnded",
-            handleCallEnded
-        );
-
-        return () => {
-
-            socket.off(
-                "callEnded",
-                handleCallEnded
-            );
-
-        };
-
-    }, []);
+    if (targetId) {
+        console.log("📴 Sending endCall to:", targetId);
+        sendSocketEndCall(targetId);
+    }
+};
 
     const displayUsers = (
         searchText.trim()
@@ -1333,9 +845,7 @@ function Chat() {
 
         setSelectedUser(userId);
 
-        socket.emit("activeChat", {
-            userId
-        });
+        setActiveChat(userId);
 
         setMessages([]);
 
@@ -1374,9 +884,7 @@ function Chat() {
 
     const handleBackToSidebar = () => {
 
-        socket.emit("activeChat", {
-            userId: null
-        });
+        setActiveChat(null);
 
         setShowChat(false);
     };
@@ -1418,7 +926,7 @@ function Chat() {
                     selectedUser={selectedUser}
                     displayName={selectedUsername}
                     callType={callType}
-                    onEndCall={endCall}
+                    onEndCall={() => endCall(selectedUser)}
                 />
             )}
 
@@ -1432,7 +940,7 @@ function Chat() {
                             ? acceptVideoCall
                             : acceptAudioCall
                     }
-                    onReject={endCall}
+                    onReject={() => endCall(caller)}
                 />
             )}
 
@@ -1445,7 +953,7 @@ function Chat() {
                         callType={callType}
                         isMuted={isMuted}
                         onMute={toggleMute}
-                        onEndCall={endCall}
+                        onEndCall={() => endCall(selectedUser || caller)}
                     />
                 )}
             {callStatus === "connected" &&
@@ -1459,7 +967,7 @@ function Chat() {
                         isCameraOff={isCameraOff}
                         onMute={toggleMute}
                         onCamera={toggleCamera}
-                        onEndCall={endCall}
+                        onEndCall={() => endCall(selectedUser || caller)}
                     />
                 )
             }

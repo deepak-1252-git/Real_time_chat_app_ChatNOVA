@@ -1,3 +1,7 @@
+body{
+    margin: 0;
+    padding: 0;
+}
 .auth-page {
     min-height: 100vh;
 
@@ -7,7 +11,7 @@
 
     padding: 20px;
 
-    background: #f5f7fb;
+    background: #24a973d3;
 }
 
 .auth-card {

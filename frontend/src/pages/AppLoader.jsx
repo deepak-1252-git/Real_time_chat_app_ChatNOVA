@@ -80,7 +80,6 @@ function AppLoader({ children }) {
             <div className="center-pin"></div>
             <div className="loader-spinner"></div>
             <div className="rope-arm">
-              <div className="rope-line"></div>
               <div className="loader-logo">
                 <img src="/favicon.jpg" alt="ChatNOVA" className="loader-img" />
               </div>
