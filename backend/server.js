@@ -116,7 +116,9 @@ io.on("connection", (socket) => {
     });
 
     socket.on("sendMessage", async (data) => {
+
         try {
+
             const { receiverId, message } = data;
 
             if (!socket.userId) {
@@ -126,34 +128,53 @@ io.on("connection", (socket) => {
             if (!receiverId || !message?.trim()) {
                 return;
             }
-            // Send message to receiver
-            const receiverSocketId = onlineUsers.get(String(receiverId));
 
-            const receiverSocket = receiverSocketId
-                ? io.sockets.sockets.get(receiverSocketId)
-                : null;
+            const receiverIdString = String(receiverId);
 
-            const isReceiverInChat =
-                receiverSocket &&
-                String(receiverSocket.activeChat) ===
-                String(socket.userId);
+            const receiverSocketIds = onlineUsers.get(receiverIdString);
 
-            const newMessage = await Message.create({
-                sender: socket.userId,
-                receiver: receiverId,
-                message: message.trim(),
-                isRead: Boolean(isReceiverInChat)
-            });
+            let isReceiverInChat = false;
 
-            console.log("Message saved:", newMessage._id);
+            if (
+                receiverSocketIds &&
+                receiverSocketIds.size > 0
+            ) {
 
-            socket.emit("messageSent", {
-                _id: newMessage._id,
-                senderId: socket.userId,
-                receiverId: receiverId,
-                message: newMessage.message,
-                createdAt: newMessage.createdAt
-            });
+                for (
+                    const socketId
+                    of receiverSocketIds
+                ) {
+
+                    const receiverSocket =
+                        io.sockets.sockets.get(
+                            socketId
+                        );
+
+                    if (
+                        receiverSocket &&
+                        String(
+                            receiverSocket.activeChat
+                        ) ===
+                        String(socket.userId)
+                    ) {
+
+                        isReceiverInChat = true;
+                        break;
+
+                    }
+
+                }
+
+            }
+
+            const newMessage =
+                await Message.create({
+                    sender: socket.userId,
+                    receiver: receiverId,
+                    message: message.trim(),
+                    isRead: isReceiverInChat
+
+                });
 
             const messageData = {
                 _id: newMessage._id,
@@ -163,20 +184,36 @@ io.on("connection", (socket) => {
                 createdAt: newMessage.createdAt
             };
 
-            if (receiverSocketId) {
-
-                io.to(receiverSocketId).emit(
-                    "receiveMessage",
-                    messageData
-                );
-
-            }
-
-            // Send message back to sender
+            // Send to sender
             socket.emit(
                 "messageSent",
                 messageData
             );
+
+            // Send to ALL sockets of receiver
+            if (
+                receiverSocketIds &&
+                receiverSocketIds.size > 0
+            ) {
+
+                for (
+                    const socketId
+                    of receiverSocketIds
+                ) {
+
+                    io.to(socketId).emit(
+                        "receiveMessage",
+                        messageData
+                    );
+                }
+
+            } else {
+
+                console.log(
+                    "❌ Receiver is NOT online"
+                );
+
+            }
 
         } catch (error) {
 
@@ -186,82 +223,105 @@ io.on("connection", (socket) => {
             );
 
         }
+
     });
+    // --------------------------------
+    // socket.on(
+    //     "callUser",
+    //     ({
+    //         receiverId,
+    //         callerId,
+    //         callType,
+    //         offer
+    //     }) => {
 
-    socket.on(
-        "callUser",
-        ({
-            receiverId,
-            callerId,
-            callType,
-            offer
-        }) => {
+    //         const receiverSockets = onlineUsers.get(String(receiverId));
 
-            const receiverSocketId = onlineUsers.get(receiverId);
+    //         console.log("📞 CALL REQUEST:", {
+    //             receiverId,
+    //             receiverSockets
+    //         });
 
-            if (!receiverSocketId) {
-                return;
-            }
+    //         if (!receiverSockets || receiverSockets.size === 0) {
 
-            io.to(receiverSocketId).emit("incomingCall", {
-                callerId,
-                callType,
-                offer
-            });
+    //             console.log(
+    //                 "❌ Receiver socket not found:",
+    //             );
 
-        });
+    //             return;
+    //         }
 
-    socket.on(
-        "callAccepted",
-        ({ callerId, answer }) => {
+    //         console.log(
+    //             "📞 Sending incoming call to:",
+    //             receiverSockets
+    //         );
 
-            const callerSocketId = onlineUsers.get(callerId);
+    //         for (const socketId of receiverSockets) {
 
-            console.log(
-                "Sending call answer to:",
-                callerId
-            );
+    //             io.to(socketId).emit(
+    //                 "incomingCall",
+    //                 {
+    //                     callerId,
+    //                     callType,
+    //                     offer
+    //                 }
+    //             );
 
-            console.log(
-                "Caller socket:",
-                callerSocketId
-            );
+    //         }
 
-            if (!callerSocketId) {
-                console.log(
-                    "Caller socket not found"
-                );
-                return;
-            }
+    //     });
 
-            io.to(callerSocketId).emit(
-                "callAnswered",
-                {
-                    answer
-                }
-            );
+    // socket.on(
+    //     "callAccepted",
+    //     ({ callerId, answer }) => {
 
-        }
-    );
+    //         const callerSocketId = onlineUsers.get(callerId);
 
-    socket.on(
-        "endCall",
-        ({ targetUserId }) => {
+    //         console.log(
+    //             "Sending call answer to:",
+    //             callerId
+    //         );
 
-            const targetSocketId = onlineUsers.get(targetUserId);
+    //         console.log(
+    //             "Caller socket:",
+    //             callerSocketId
+    //         );
 
-            if (!targetSocketId) {
-                return;
-            }
+    //         if (!callerSocketId) {
+    //             console.log(
+    //                 "Caller socket not found"
+    //             );
+    //             return;
+    //         }
 
-            io.to(targetSocketId).emit(
-                "callEnded"
-            );
+    //         io.to(callerSocketId).emit(
+    //             "callAnswered",
+    //             {
+    //                 answer
+    //             }
+    //         );
 
-        }
-    );
+    //     }
+    // );
 
-    socket.on(
+    // socket.on(
+    //     "endCall",
+    //     ({ targetUserId }) => {
+
+    //         const targetSocketId = onlineUsers.get(targetUserId);
+
+    //         if (!targetSocketId) {
+    //             return;
+    //         }
+
+    //         io.to(targetSocketId).emit(
+    //             "callEnded"
+    //         );
+
+    //     }
+    // );
+
+    // socket.on(
         "iceCandidate",
         ({ targetUserId, candidate }) => {
 
@@ -279,7 +339,161 @@ io.on("connection", (socket) => {
             );
 
         }
+    // );
+    // /----------------------------
+
+    socket.on(
+        "callUser",
+        ({
+            receiverId,
+            callerId,
+            callType,
+            offer
+        }) => {
+
+            const receiverSockets =
+                onlineUsers.get(String(receiverId));
+
+            console.log("📞 CALL REQUEST:", {
+                receiverId: String(receiverId),
+                callerId: String(callerId),
+                callType,
+                receiverSockets
+            });
+
+            if (!receiverSockets || receiverSockets.size === 0) {
+                console.log(
+                    "❌ Receiver socket not found:",
+                    receiverId
+                );
+                return;
+            }
+
+            console.log(
+                "📞 Sending incoming call to:",
+                receiverSockets
+            );
+
+            for (const socketId of receiverSockets) {
+
+                io.to(socketId).emit(
+                    "incomingCall",
+                    {
+                        callerId: String(callerId),
+                        callType,
+                        offer
+                    }
+                );
+
+            }
+        }
     );
+
+    socket.on(
+        "callAccepted",
+        ({ callerId, answer }) => {
+
+            const callerSockets =
+                onlineUsers.get(String(callerId));
+
+            console.log(
+                "📞 CALL ACCEPTED:",
+                {
+                    callerId: String(callerId),
+                    callerSockets
+                }
+            );
+
+            if (!callerSockets || callerSockets.size === 0) {
+                console.log(
+                    "❌ Caller socket not found:",
+                    callerId
+                );
+                return;
+            }
+
+            for (const socketId of callerSockets) {
+
+                io.to(socketId).emit(
+                    "callAnswered",
+                    {
+                        answer
+                    }
+                );
+
+            }
+
+            console.log(
+                "✅ Call answer sent to caller"
+            );
+        }
+    );
+
+    socket.on(
+        "endCall",
+        ({ targetUserId }) => {
+
+            const targetId = String(targetUserId);
+
+            const targetSockets =
+                onlineUsers.get(targetId);
+
+            console.log(
+                "📴 END CALL:",
+                {
+                    targetUserId: targetId,
+                    targetSockets
+                }
+            );
+
+            if (!targetSockets || targetSockets.size === 0) {
+                console.log(
+                    "❌ Target socket not found:",
+                    targetId
+                );
+                return;
+            }
+
+            for (const socketId of targetSockets) {
+
+                io.to(socketId).emit(
+                    "callEnded"
+                );
+
+            }
+
+            console.log(
+                "✅ callEnded sent to target"
+            );
+        }
+    );
+
+    socket.on(
+        "iceCandidate",
+        ({ targetUserId, candidate }) => {
+
+            const targetId = String(targetUserId);
+
+            const targetSockets =
+                onlineUsers.get(targetId);
+
+            if (!targetSockets || targetSockets.size === 0) {
+                return;
+            }
+
+            for (const socketId of targetSockets) {
+
+                io.to(socketId).emit(
+                    "iceCandidate",
+                    {
+                        candidate
+                    }
+                );
+
+            }
+        }
+    );
+    // ----------------------------
 
     socket.on("hello", (message) => {
 
