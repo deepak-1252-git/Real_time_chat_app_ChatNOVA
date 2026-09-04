@@ -1,10 +1,8 @@
 import { useRef, useState } from "react";
 
 function useWebRTC({
-    sendCallUser,
-    sendCallAccepted,
     sendIceCandidate,
-    sendSocketEndCall
+    onRemoteStream
 } = {}) {
 
     const peerConnectionRef = useRef(null);
@@ -57,17 +55,18 @@ function useWebRTC({
         };
 
         peerConnection.ontrack = (event) => {
+            const remoteStream = event.streams[0];
 
-            const remoteStream =
-                event.streams[0];
+            if (!remoteStream) return;
 
             console.log(
                 "🔥 REMOTE STREAM RECEIVED:",
                 remoteStream
             );
 
-            remoteStreamRef.current =
-                remoteStream;
+            remoteStreamRef.current = remoteStream;
+
+            onRemoteStream?.(remoteStream);
         };
 
         peerConnection.onconnectionstatechange = () => {
@@ -85,7 +84,6 @@ function useWebRTC({
 
         return peerConnection;
     };
-
 
     // --------------------------------
     // MICROPHONE STREAM
@@ -125,7 +123,6 @@ function useWebRTC({
             return null;
         }
     };
-
 
     // --------------------------------
     // VIDEO STREAM
@@ -167,106 +164,48 @@ function useWebRTC({
         }
     };
 
-
     // --------------------------------
     // AUDIO OFFER
     // --------------------------------
 
-    const createAudioOffer = async (
-        peerConnection
-    ) => {
-
+    const createOffer = async (peerConnection) => {
         try {
+            const offer = await peerConnection.createOffer();
 
-            const offer =
-                await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
 
-            await peerConnection.setLocalDescription(
-                offer
-            );
-
-            console.log(
-                "WebRTC offer created:",
-                offer
-            );
+            console.log("WebRTC offer created:", offer);
 
             return offer;
-
         } catch (error) {
-
-            console.error(
-                "Failed to create WebRTC offer:",
-                error
-            );
-
+            console.error("Failed to create WebRTC offer:", error);
             return null;
         }
     };
-
 
     // --------------------------------
     // AUDIO ANSWER
     // --------------------------------
 
-    const createAudioAnswer = async (
-        peerConnection,
-        offer
-    ) => {
-
+    const createAnswer = async (peerConnection, offer) => {
         try {
-
             await peerConnection.setRemoteDescription(
                 new RTCSessionDescription(offer)
             );
 
-            console.log(
-                "Remote offer set successfully"
-            );
+            console.log("Remote offer set successfully");
 
-            const pendingCandidates =
-                pendingIceCandidatesRef.current;
+            await processPendingIceCandidates(peerConnection);
 
-            for (
-                const candidate of pendingCandidates
-            ) {
+            const answer = await peerConnection.createAnswer();
 
-                try {
+            await peerConnection.setLocalDescription(answer);
 
-                    await peerConnection.addIceCandidate(
-                        new RTCIceCandidate(candidate)
-                    );
-
-                    console.log(
-                        "Queued ICE candidate added"
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Failed to add queued ICE candidate:",
-                        error
-                    );
-                }
-            }
-
-            pendingIceCandidatesRef.current = [];
-
-            const answer =
-                await peerConnection.createAnswer();
-
-            await peerConnection.setLocalDescription(
-                answer
-            );
-
-            console.log(
-                "WebRTC answer created:",
-                answer
-            );
+            console.log("WebRTC answer created:", answer);
 
             return answer;
 
         } catch (error) {
-
             console.error(
                 "Failed to create WebRTC answer:",
                 error
@@ -275,6 +214,10 @@ function useWebRTC({
             return null;
         }
     };
+
+    // --------------------------------
+    //  handelers
+    // --------------------------------
 
     const handleCallAnswered = async ({ answer }) => {
         const peerConnection = peerConnectionRef.current;
@@ -297,6 +240,32 @@ function useWebRTC({
                 error
             );
         }
+    };
+
+    const processPendingIceCandidates = async (peerConnection) => {
+        const pendingCandidates =
+            pendingIceCandidatesRef.current;
+
+        if (!pendingCandidates.length) {
+            return;
+        }
+
+        for (const candidate of pendingCandidates) {
+            try {
+                await peerConnection.addIceCandidate(
+                    new RTCIceCandidate(candidate)
+                );
+
+                console.log("Queued ICE candidate added");
+            } catch (error) {
+                console.error(
+                    "Failed to add queued ICE candidate:",
+                    error
+                );
+            }
+        }
+
+        pendingIceCandidatesRef.current = [];
     };
 
     const handleRemoteIceCandidate = async ({ candidate }) => {
@@ -377,8 +346,8 @@ function useWebRTC({
         createPeerConnection,
         getMicrophoneStream,
         getVideoStream,
-        createAudioOffer,
-        createAudioAnswer,
+        createOffer,
+        createAnswer,
 
         handleCallAnswered,
         handleRemoteIceCandidate,

@@ -139,6 +139,31 @@ function Chat() {
     //          useWebRTC
     // --------------------------------------------------------------------
 
+    const handleRemoteStream = useCallback((remoteStream) => {
+
+        remoteStreamRef.current = remoteStream;
+
+        if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = remoteStream;
+
+            console.log(
+                "✅ Remote audio attached to audio element"
+            );
+        }
+
+        if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
+
+            console.log(
+                "✅ Remote video attached to video element"
+            );
+        }
+
+        console.log(
+            "✅ Remote stream received in Chat.jsx"
+        );
+
+    }, []);
 
     const {
         peerConnectionRef,
@@ -165,17 +190,15 @@ function Chat() {
         createPeerConnection,
         getMicrophoneStream,
         getVideoStream,
-        createAudioOffer,
-        createAudioAnswer,
+        createOffer,
+        createAnswer,
 
         handleCallAnswered,
         handleRemoteIceCandidate,
         handleCallEnded
     } = useWebRTC({
-        sendCallUser,
-        sendCallAccepted,
         sendIceCandidate,
-        sendSocketEndCall
+        onRemoteStream: handleRemoteStream
     });
 
     // --------------------------------------------------------------------
@@ -452,7 +475,7 @@ function Chat() {
         );
 
         const offer =
-            await createAudioOffer(
+            await createOffer(
                 peerConnection
             );
 
@@ -520,12 +543,15 @@ function Chat() {
             "Audio + video tracks added to WebRTC"
         );
 
-        const offer =
-            await peerConnection.createOffer();
+        const offer = await createOffer(peerConnection);
 
-        await peerConnection.setLocalDescription(
-            offer
-        );
+        if (!offer) {
+            stream.getTracks().forEach((track) => track.stop());
+            peerConnection.close();
+            peerConnectionRef.current = null;
+            localStreamRef.current = null;
+            return;
+        }
 
         console.log(
             "Video call offer created:",
@@ -550,49 +576,19 @@ function Chat() {
 
     useEffect(() => {
 
-        const localStream =
-            localStreamRef.current;
+        const localStream = localStreamRef.current;
 
-        if (
-            localStream &&
-            localVideoRef.current
-        ) {
-
-            localVideoRef.current.srcObject =
-                localStream;
-
-            console.log(
-                "✅ Local video attached to video element"
-            );
+        if (localStream && localVideoRef.current) {
+            localVideoRef.current.srcObject = localStream;
+            console.log("✅ Local video attached to video element");
         }
 
-        const remoteStream =
-            remoteStreamRef.current;
+        const remoteStream = remoteStreamRef.current;
 
-        if (
-            remoteStream &&
-            remoteVideoRef.current
-        ) {
+        if (remoteStream && remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
 
-            remoteVideoRef.current.srcObject =
-                remoteStream;
-
-            console.log(
-                "✅ Remote video attached to video element"
-            );
-        }
-
-        if (
-            remoteStream &&
-            remoteAudioRef.current
-        ) {
-
-            remoteAudioRef.current.srcObject =
-                remoteStream;
-
-            console.log(
-                "✅ Remote audio attached to audio element"
-            );
+            console.log("✅ Remote video attached to video element");
         }
 
     }, [callStatus, callType]);
@@ -657,7 +653,7 @@ function Chat() {
         );
 
         const answer =
-            await createAudioAnswer(
+            await createAnswer(
                 peerConnection,
                 remoteOfferRef.current
             );
@@ -717,40 +713,24 @@ function Chat() {
             "Receiver audio + video tracks added"
         );
 
-        try {
+        const answer = await createAnswer(
+            peerConnection,
+            remoteOfferRef.current
+        );
 
-            await peerConnection.setRemoteDescription(
-                new RTCSessionDescription(
-                    remoteOfferRef.current
-                )
-            );
-
-            const answer =
-                await peerConnection.createAnswer();
-
-            await peerConnection.setLocalDescription(
-                answer
-            );
-
-            sendCallAccepted({
-                callerId: caller,
-                answer
-            });
-
-            setCallStatus("connected");
-
-            console.log(
-                "Video call accepted"
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Video answer failed:",
-                error
-            );
-
+        if (!answer) {
+            return;
         }
+
+        sendCallAccepted({
+            callerId: caller,
+            answer
+        });
+
+        setCallStatus("connected");
+
+        console.log("Video call accepted");
+
     };
 
     const toggleMute = () => {
@@ -782,55 +762,55 @@ function Chat() {
 
     const endCall = (targetUserId) => {
 
-    console.log("Ending call:", targetUserId);
+        console.log("Ending call:", targetUserId);
 
-    const targetId =
-        targetUserId !== null &&
-        targetUserId !== undefined
-            ? String(targetUserId)
-            : null;
+        const targetId =
+            targetUserId !== null &&
+                targetUserId !== undefined
+                ? String(targetUserId)
+                : null;
 
-    if (localStreamRef.current) {
-        localStreamRef.current
-            .getTracks()
-            .forEach((track) => track.stop());
+        if (localStreamRef.current) {
+            localStreamRef.current
+                .getTracks()
+                .forEach((track) => track.stop());
 
-        localStreamRef.current = null;
-    }
+            localStreamRef.current = null;
+        }
 
-    if (peerConnectionRef.current) {
-        peerConnectionRef.current.close();
-        peerConnectionRef.current = null;
-    }
+        if (peerConnectionRef.current) {
+            peerConnectionRef.current.close();
+            peerConnectionRef.current = null;
+        }
 
-    remoteStreamRef.current = null;
+        remoteStreamRef.current = null;
 
-    if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = null;
-    }
+        if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = null;
+        }
 
-    if (localVideoRef.current) {
-        localVideoRef.current.srcObject = null;
-    }
+        if (localVideoRef.current) {
+            localVideoRef.current.srcObject = null;
+        }
 
-    if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = null;
-    }
+        if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+        }
 
-    remoteOfferRef.current = null;
-    pendingIceCandidatesRef.current = [];
+        remoteOfferRef.current = null;
+        pendingIceCandidatesRef.current = [];
 
-    setCallStatus("idle");
-    setCallType(null);
-    setCaller(null);
-    setIsMuted(false);
-    setIsCameraOff(false);
+        setCallStatus("idle");
+        setCallType(null);
+        setCaller(null);
+        setIsMuted(false);
+        setIsCameraOff(false);
 
-    if (targetId) {
-        console.log("📴 Sending endCall to:", targetId);
-        sendSocketEndCall(targetId);
-    }
-};
+        if (targetId) {
+            console.log("📴 Sending endCall to:", targetId);
+            sendSocketEndCall(targetId);
+        }
+    };
 
     const displayUsers = (
         searchText.trim()
