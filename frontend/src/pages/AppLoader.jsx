@@ -6,7 +6,7 @@ function AppLoader({ children }) {
   const location = useLocation();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+  const [isStarted, setIsStarted] = useState(false);
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
@@ -31,26 +31,18 @@ function AppLoader({ children }) {
         const data = await response.json();
 
         if (response.ok && data.success) {
-          const storedUser =
-            localStorage.getItem("user");
+          const storedUser = localStorage.getItem("user");
           let user = {};
           if (storedUser) {
             try {
               user = JSON.parse(storedUser);
             } catch (error) {
-              console.error(
-                "Failed to parse stored user:",
-                error
-              );
+              console.error("Failed to parse stored user:", error);
             }
           }
           user.id = data.userId;
-          localStorage.setItem(
-            "user",
-            JSON.stringify(user)
-          );
+          localStorage.setItem("user", JSON.stringify(user));
           setIsAuthenticated(true);
-
         } else {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
@@ -79,20 +71,36 @@ function AppLoader({ children }) {
           <div className="loader-stage">
             <div className="center-pin"></div>
             <div className="loader-spinner"></div>
-            <div className="rope-arm">
-              <div className="loader-logo">
-                <img src="/favicon.jpg" alt="ChatNOVA" className="loader-img" />
-              </div>
-            </div>
           </div>
-          <p>Loading...</p>
+          <p>Checking authentication...</p>
         </div>
-      </div >
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!isStarted) {
+    return (
+      <div className="app-loader">
+        <div className="loader-content welcome-card">
+          <div className="auth--logo">
+            <img src="/favicon.jpg" alt="ChatNOVA" className="logo--img" />
+          </div>
+          <h2>Welcome to ChatNOVA</h2>
+          <p className="ready-text">Authentication successful. You are ready to go!</p>
+
+          <button
+            className="get-started-btn"
+            onClick={() => setIsStarted(true)}
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return children;

@@ -1,7 +1,9 @@
-body{
-    margin: 0;
-    padding: 0;
+body {
+  margin: 0;
+  padding: 0;
 }
+
+/* ------------------------------- */
 .app-loader {
   position: fixed;
 
@@ -13,7 +15,7 @@ body{
   align-items: center;
   justify-content: center;
 
-  background: #227f53;
+  background: #6bc998;
 }
 
 .loader-content {
@@ -61,31 +63,6 @@ body{
   color: #6b7280;
 }
 
-/* ----------------------------- */
-/* Logo (Jerk + Pop/Bounce) */
-.loader-logo {
-  position: absolute;
-  right: -16px;
-  top: -14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #1e293b;
-  border: 2px solid #38bdf8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
- 
-  animation: logoJerkAndBounce 2.6s cubic-bezier(0.45, 0.05, 0.2, 1) infinite;
-}
-
-.loader-img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
 /* --------------------------------- */
 
 /* Outer Wrapper */
@@ -122,24 +99,6 @@ body{
   z-index: 5;
   box-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
 }
-
-/* 2. Rope Arm (Rotating & Stretching from Center) */
-.rope-arm {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 75px;
-  /* Spinner radius + bahar ka distance */
-  height: 4px;
-  transform-origin: left center;
-  z-index: 3;
-  animation: ropeSwing 2.6s cubic-bezier(0.45, 0.05, 0.2, 1) infinite;
-}
- 
-/* 3. Logo Icon (Outside the Spinner) */
-
-
-
 
 /* Spinner: 3 baar struggle karega, fir smooth full 720deg spin */
 @keyframes wheelStruggleSpin {
@@ -181,118 +140,37 @@ body{
   }
 }
 
-/* Rope ka angle spinner ke sath swing karega */
-@keyframes ropeSwing {
-  0% {
-    transform: translateY(-50%) rotate(0deg);
-  }
+/* ----------------------------------- */
 
-  12% {
-    transform: translateY(-50%) rotate(35deg);
-  }
-
-  20% {
-    transform: translateY(-50%) rotate(8deg);
-  }
-
-  32% {
-    transform: translateY(-50%) rotate(75deg);
-  }
-
-  42% {
-    transform: translateY(-50%) rotate(18deg);
-  }
-
-  54% {
-    transform: translateY(-50%) rotate(125deg);
-  }
-
-  64% {
-    transform: translateY(-50%) rotate(30deg);
-  }
-
-  /* Breakout - Rope swings around completely */
-  76% {
-    transform: translateY(-50%) rotate(180deg);
-  }
-
-  100% {
-    transform: translateY(-50%) rotate(720deg);
-  }
+.welcome-card h2 {
+  color: #ffffff;
 }
 
-/* Rope tension stretch (tanchav aur dheel) */
-@keyframes ropeTensionStretch {
-
-  0%,
-  100% {
-    transform: scaleX(1);
-  }
-
-  12%,
-  32%,
-  54% {
-    transform: scaleX(1.18);
-  }
-
-  /* Khinchav ke waqt stretch */
-  20%,
-  42%,
-  64% {
-    transform: scaleX(0.92);
-  }
-
-  /* Rebound ke waqt loose */
-  72% {
-    transform: scaleX(1.25);
-  }
-
-  /* Maximum tension */
-  78% {
-    transform: scaleX(1.0);
-  }
-
-  /* Released */
+.ready-text {
+  color: #e2e8f0 !important;
+  font-size: 15px !important;
+  margin-bottom: 24px;
 }
 
-/* Logo icon ka counter-jerk & uchhalna */
-@keyframes logoJerkAndBounce {
+.get-started-btn {
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  transition: all 0.2s ease-in-out;
+}
 
-  0%,
-  100% {
-    transform: scale(1) rotate(0deg);
-  }
+.get-started-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
+}
 
-  12% {
-    transform: scale(0.95) translate(4px, 2px) rotate(15deg);
-  }
-
-  20% {
-    transform: scale(1) translate(-2px, -1px) rotate(-5deg);
-  }
-
-  32% {
-    transform: scale(0.92) translate(8px, 4px) rotate(25deg);
-  }
-
-  42% {
-    transform: scale(1) translate(-3px, -2px) rotate(-8deg);
-  }
-
-  54% {
-    transform: scale(0.9) translate(12px, 6px) rotate(35deg);
-  }
-
-  64% {
-    transform: scale(1.05) translate(-4px, -3px) rotate(-12deg);
-  }
-
-  /* Snap / Uchhalna (Air Launch) */
-  74% {
-    transform: scale(1.25) translate(18px, -16px) rotate(45deg);
-  }
-
-  82% {
-    transform: scale(1) translate(-2px, 2px) rotate(0deg);
-  }
+.get-started-btn:active {
+  transform: translateY(0);
 }

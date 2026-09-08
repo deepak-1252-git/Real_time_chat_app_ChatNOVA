@@ -1,8 +1,17 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+
+const rtcConfig = {
+    iceServers: [
+        {
+            urls: "stun:stun.l.google.com:19302"
+        }
+    ]
+};
 
 function useWebRTC({
     sendIceCandidate,
-    onRemoteStream
+    onRemoteStream,
+    onCallCleanup
 } = {}) {
 
     const peerConnectionRef = useRef(null);
@@ -16,14 +25,6 @@ function useWebRTC({
     const [caller, setCaller] = useState(null);
     const [isMuted, setIsMuted] = useState(false);
     const [isCameraOff, setIsCameraOff] = useState(false);
-
-    const rtcConfig = {
-        iceServers: [
-            {
-                urls: "stun:stun.l.google.com:19302"
-            }
-        ]
-    };
 
     // --------------------------------
     // CREATE PEER CONNECTION
@@ -242,7 +243,7 @@ function useWebRTC({
         }
     };
 
-    const processPendingIceCandidates = async (peerConnection) => {
+    const processPendingIceCandidates = useCallback(async (peerConnection) => {
         const pendingCandidates =
             pendingIceCandidatesRef.current;
 
@@ -266,7 +267,7 @@ function useWebRTC({
         }
 
         pendingIceCandidatesRef.current = [];
-    };
+    }, []);
 
     const handleRemoteIceCandidate = async ({ candidate }) => {
         const peerConnection = peerConnectionRef.current;
@@ -295,14 +296,13 @@ function useWebRTC({
         }
     };
 
-    const handleCallEnded = () => {
-        console.log("Call ended by other user");
+    const cleanupCall = () => {
+        console.log("🧹 Cleaning up WebRTC call");
 
         if (localStreamRef.current) {
-            localStreamRef.current
-                .getTracks()
-                .forEach((track) => track.stop());
-
+            localStreamRef.current.getTracks().forEach((track) => {
+                track.stop();
+            });
             localStreamRef.current = null;
         }
 
@@ -311,6 +311,7 @@ function useWebRTC({
             peerConnectionRef.current = null;
         }
 
+        remoteStreamRef.current = null;
         remoteOfferRef.current = null;
         pendingIceCandidatesRef.current = [];
 
@@ -319,6 +320,15 @@ function useWebRTC({
         setCaller(null);
         setIsMuted(false);
         setIsCameraOff(false);
+
+        onCallCleanup?.();
+
+        console.log("✅ WebRTC cleanup completed");
+    };
+
+    const handleCallEnded = () => {
+        console.log("📴 Call ended by other user");
+        cleanupCall();
     };
 
     return {
@@ -351,6 +361,7 @@ function useWebRTC({
 
         handleCallAnswered,
         handleRemoteIceCandidate,
+        cleanupCall,
         handleCallEnded
     };
 }

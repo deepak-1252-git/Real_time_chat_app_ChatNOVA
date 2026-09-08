@@ -165,6 +165,8 @@ function Chat() {
 
     }, []);
 
+
+
     const {
         peerConnectionRef,
         localStreamRef,
@@ -195,10 +197,26 @@ function Chat() {
 
         handleCallAnswered,
         handleRemoteIceCandidate,
+        cleanupCall,
         handleCallEnded
     } = useWebRTC({
         sendIceCandidate,
-        onRemoteStream: handleRemoteStream
+        onRemoteStream: handleRemoteStream,
+        onCallCleanup: () => {
+            if (remoteAudioRef.current) {
+                remoteAudioRef.current.srcObject = null;
+            }
+
+            if (localVideoRef.current) {
+                localVideoRef.current.srcObject = null;
+            }
+
+            if (remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = null;
+            }
+
+            console.log("🧹 Media elements cleaned");
+        }
     });
 
     // --------------------------------------------------------------------
@@ -761,29 +779,14 @@ function Chat() {
     };
 
     const endCall = (targetUserId) => {
-
         console.log("Ending call:", targetUserId);
 
         const targetId =
-            targetUserId !== null &&
-                targetUserId !== undefined
+            targetUserId !== null && targetUserId !== undefined
                 ? String(targetUserId)
                 : null;
 
-        if (localStreamRef.current) {
-            localStreamRef.current
-                .getTracks()
-                .forEach((track) => track.stop());
-
-            localStreamRef.current = null;
-        }
-
-        if (peerConnectionRef.current) {
-            peerConnectionRef.current.close();
-            peerConnectionRef.current = null;
-        }
-
-        remoteStreamRef.current = null;
+        cleanupCall();
 
         if (remoteAudioRef.current) {
             remoteAudioRef.current.srcObject = null;
@@ -796,15 +799,6 @@ function Chat() {
         if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = null;
         }
-
-        remoteOfferRef.current = null;
-        pendingIceCandidatesRef.current = [];
-
-        setCallStatus("idle");
-        setCallType(null);
-        setCaller(null);
-        setIsMuted(false);
-        setIsCameraOff(false);
 
         if (targetId) {
             console.log("📴 Sending endCall to:", targetId);

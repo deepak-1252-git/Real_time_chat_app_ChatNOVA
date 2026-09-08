@@ -253,6 +253,7 @@ function useChatSocket(
             offer
         });
     };
+
     const acceptCall = ({ callerId, answer }) => {
         if (!callerId || !answer) {
             return;
@@ -262,6 +263,7 @@ function useChatSocket(
             answer
         });
     };
+
     const sendIceCandidate = ({ targetUserId, candidate }) => {
         if (!targetUserId || !candidate) {
             return;
@@ -271,6 +273,7 @@ function useChatSocket(
             candidate
         });
     };
+
     const endCall = (targetUserId) => {
         if (!targetUserId) {
             return;
@@ -279,6 +282,7 @@ function useChatSocket(
             targetUserId
         });
     };
+    
     const setActiveChat = (userId) => {
         socket.emit("activeChat", {
             userId: userId || null
