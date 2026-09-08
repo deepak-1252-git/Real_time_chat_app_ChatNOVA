@@ -47,108 +47,111 @@ function Register() {
     };
 
     return (
-        <div className="auth-page">
+        <>
+            <div className="body-container">
+                <div className="container">
+                    <div className="welcome-section">
+                        <div className="shape-triangle-right"></div>
+                        <div className="shape-triangle-bottom"></div>
 
-            <div className="auth-card">
+                        <div className="auth-logo">
+                            <img src="favicon.jpg" alt="favicon" className="logo-img" />
+                        </div>
 
-                <div className="auth-logo">
-                    <img src="favicon.jpg" alt="favicon" className="logo-img" />
-                </div>
-
-                <h1>Create Account</h1>
-
-                <p className="auth-subtitle">
-                    Join ChatNOVA today
-                </p>
-
-                <form onSubmit={handleRegister}>
-
-                    <div className="form-group">
-                        <label>Username</label>
-
-                        <input
-                            type="text"
-                            value={username}
-                            onChange={(e) =>
-                                setUsername(e.target.value)
-                            }
-                            placeholder="Choose a username"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Email</label>
-
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) =>
-                                setEmail(e.target.value)
-                            }
-                            placeholder="Enter your email"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Password</label>
-
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) =>
-                                setPassword(e.target.value)
-                            }
-                            placeholder="Create a password"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Confirm Password</label>
-
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) =>
-                                setConfirmPassword(e.target.value)
-                            }
-                            placeholder="Confirm your password"
-                        />
-                    </div>
-
-                    {error && (
-                        <p className="auth-error">
-                            {error}
+                        <h2 className="welcome-title">Welcome Back!</h2>
+                        <div className="welcome-divider"></div>
+                        <p className="welcome-text">
+                            To keep connected with us please login with your personal info.
                         </p>
-                    )}
+                        <button
+                            className="btn-signup-outline"
+                            type="button"
+                            onClick={() => navigate("/login")}
+                        >
+                            Login
+                        </button>
+                    </div>
 
-                    <button
-                        type="submit"
-                        className="auth-button"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <span className="button-spinner"></span>
-                        ) : (
-                            "Register"
-                        )}
-                    </button>
+                    <div className="sign-in-section">
+                    
+                        <div className="form-wrapper">
+                            <h1 className="title">Create Account</h1>
+                            <div className="divider"></div>
 
-                </form>
+                            <p className="subtitle">use your email for registration</p>
 
-                <p className="auth-switch">
-                    Already have an account?
+                            <form onSubmit={handleRegister} className="form">
+                                <div className="input-box active-field">
+                                    <label for="name">Username</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        placeholder="Deepak"
+                                    />
+                                </div>
+                                <div className="input-box">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                    />
+                                </div>
+                                <div className="input-box">
+                                    <label>Password</label>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Create a password"
+                                    />
+                                </div>
+                                <div className="input-box">
+                                    <label>Confirm Password</label>
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="Confirm your password"
+                                    />
+                                </div>
+                                {error && (
+                                    <p className="auth-error">
+                                        {error}
+                                    </p>
+                                )}
+                                <div className="form-options">
+                                    <label className="remember-me">
+                                        <input type="checkbox" required />
+                                        <span>I agree to the <a href="#">Terms &amp; Conditions</a></span>
+                                    </label>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="btn-submit"
+                                    disabled={loading}>
+                                    {loading ? (
+                                        <span className="button-spinner"></span>
+                                    ) : (
+                                        "Register"
+                                    )}
+                                </button>
+                            </form>
+                        </div>
 
-                    <button
-                        type="button"
-                        onClick={() => navigate("/login")}
-                    >
-                        Login
-                    </button>
-                </p>
-
+                        <div className="footer-links">
+                            <a href="#">Privacy Policy</a> &nbsp;•&nbsp; <a href="#">Terms &amp; Condtions</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-        </div>
+        </>
     );
 }
 export default Register;

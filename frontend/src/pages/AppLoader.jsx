@@ -90,7 +90,7 @@ function AppLoader({ children }) {
             <img src="/favicon.jpg" alt="ChatNOVA" className="logo--img" />
           </div>
           <h2>Welcome to ChatNOVA</h2>
-          <p className="ready-text">Authentication successful. You are ready to go!</p>
+          <p className="ready-text">Authentication successful. ready to go !</p>
 
           <button
             className="get-started-btn"

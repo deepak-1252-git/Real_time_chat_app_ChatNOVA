@@ -9,6 +9,7 @@ function Login() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -55,79 +56,110 @@ function Login() {
     };
 
     return (
-        <div className="auth-page">
-            <div className="auth-card">
-                <div className="auth-logo">
-                    <img src="/favicon.jpg" alt="favicon" className="logo-img" />
-                </div>
+        <>
+            <div className="body-container">
+                <div className="container">
 
-                <h1>Welcome Back</h1>
+                    <div className="sign-in-section">
+                        <div className="brand-header">
+                            <span>!</span> ChatNOVA
+                        </div>
 
-                <p className="auth-subtitle">
-                    Login to continue to ChatNOVA
-                </p>
+                        <div className="form-wrapper">
+                            <h1 className="title">Sign into Account</h1>
+                            <div className="divider"></div>
 
-                <form onSubmit={handleLogin}>
+                            <p className="subtitle">use your registered email</p>
 
-                    <div className="form-group">
-                        <label>Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter email"
-                        />
+                            <form onSubmit={handleLogin} className="form">
+                                <div className="input-box active-field">
+                                    <label for="email">Email</label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter email"
+                                        required
+                                    />
+                                </div>
+
+
+                                <div className="input-box">
+                                    <label>Password</label>
+
+                                    <input
+                                        type="password"
+                                        id="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Enter password"
+                                        required
+                                    />
+                                </div>
+
+
+                                <div className="form-options">
+                                    <label className="remember-me">
+                                        <input
+                                            type="checkbox"
+                                            checked={rememberMe}
+                                            onChange={(e) => setRememberMe(e.target.checked)}
+                                        />
+                                        Remember me
+                                    </label>
+                                    <a href="#" className="forgot-link">Forgot Password?</a>
+                                </div>
+
+                                {error && (
+                                    <p className="auth-error">
+                                        {error}
+                                    </p>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="btn-submit"
+                                    disabled={loading}>
+                                    {loading ? (
+                                        <span className="button-spinner"></span>
+                                    ) : (
+                                        "Login"
+                                    )}
+                                </button>
+                            </form>
+                        </div>
+
+                        <div className="footer-links">
+                            <a href="#">Privacy Policy</a> &nbsp;•&nbsp; <a href="#">Terms &amp; Condtions</a>
+                        </div>
                     </div>
 
 
-                    <div className="form-group">
-                        <label>Password</label>
+                    <div className="welcome-section">
+                        <div className="shape-triangle-left"></div>
+                        <div className="shape-triangle-bottom"></div>
 
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) =>
-                                setPassword(e.target.value)
-                            }
-                            placeholder="Enter password"
-                        />
-                    </div>
+                        <div className="auth-logo">
+                            <img src="favicon.jpg" alt="favicon" className="logo-img" />
+                        </div>
 
-                    {error && (
-                        <p className="auth-error">
-                            {error}
+                        <h2 className="welcome-title">Hello,Friend!</h2>
+                        <div className="welcome-divider"></div>
+                        <p className="welcome-text">
+                            Fill up personal information and start journey with us.
                         </p>
-                    )}
-
-                    <button
-                        type="submit"
-                        className="auth-button"
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <span className="button-spinner"></span>
-                        ) : (
-                            "Login"
-                        )}
-                    </button>
-
-                </form>
-
-
-                <p className="auth-switch">
-                    Don't have an account?
-
-                    <button
-                        type="button"
-                        onClick={() => navigate("/register")}
-                    >
-                        Register
-                    </button>
-                </p>
-
-            </div>
-
-        </div>
+                        <button
+                            className="btn-signup-outline"
+                            type="button"
+                            onClick={() => navigate("/register")}
+                        >
+                            Register
+                        </button>
+                    </div>
+                </div >
+            </div >
+        </>
     );
 }
 
