@@ -14,8 +14,6 @@
 
 ## 📌 About The Project
 
-**ChatNOVA** is a full-stack real-time chat application designed for instant communication between users.
-
 The project focuses on building a practical real-world communication system with a separate **frontend and backend architecture**, real-time message delivery, user interaction and a responsive chat interface.
 
 This project was developed to strengthen my understanding of:
@@ -269,112 +267,29 @@ The frontend receives the new message and updates the conversation dynamically.
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-Make sure you have installed:
-
-* Node.js
-* npm
-* Git
-* MongoDB / MongoDB Atlas
-
----
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/deepak-1252-git/Real_time_chat_app_ChatNOVA.git
-```
-
-```bash
-cd Real_time_chat_app_ChatNOVA
-```
-
----
-
-### 2. Install Backend Dependencies
-
-```bash
-cd backend
-npm install
-```
-
----
-
-### 3. Configure Environment Variables
-
-Create a `.env` file inside the backend directory.
-
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
-```
-
-Add any other environment variables required by your implementation.
-
-**Never commit your `.env` file or private credentials to GitHub.**
-
----
-
-### 4. Start Backend
-
-```bash
-npm start
-```
-
-Or, if your project uses nodemon:
-
-```bash
-npm run dev
-```
-
----
-
-### 5. Start Frontend
-
-Open a new terminal:
-
-```bash
-cd frontend
-```
-
-Then run the frontend using the command required by your frontend setup.
-
----
-
-## 🌐 Live Demo
-
-🚀 **ChatNOVA:**
-https://chatnova-seven.vercel.app/
-
----
-
 ## 📸 Screenshots
 
-Add screenshots of your application here.
+### 🔐 Authentication
 
-Example:
+<p align="center">
+  <img src="./screenshots/login.png" width="800">
+</p>
+---
+<p align="center">
+  <img src="./screenshots/register.png" width="800">
+</p>
 
-```markdown
-![ChatNOVA Home](./screenshots/home.png)
+### 💬 Home Interface
 
-![ChatNOVA Chat](./screenshots/chat.png)
+<p align="center">
+  <img src="./screenshots/home.png" width="800">
+</p>
 
-![ChatNOVA Login](./screenshots/login.png)
+### 👥 User Search & Conversations
 
-![ChatNOVA Register](./screenshots/register.png)
-```
-
-Recommended screenshots:
-
-* Login/Register
-* User dashboard
-* Chat interface
-* Mobile responsive view
-* Real-time messaging
+<p align="center">
+  <img src="./screenshots/chat.png" width="800">
+</p>
 
 ---
 
