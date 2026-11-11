@@ -10,7 +10,8 @@ function Sidebar({
     searchText,
     setSearchText,
     lastMessages,
-    unreadCounts
+    unreadCounts,
+    typingUsers
 }) {
     return (
         <aside className="chat-sidebar">
@@ -31,6 +32,7 @@ function Sidebar({
                 lastMessages={lastMessages}
                 unreadCounts={unreadCounts}
                 // currentUserId={user?.id}
+                typingUsers={typingUsers}
             />
         </aside>
     );

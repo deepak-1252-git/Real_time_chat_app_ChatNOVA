@@ -1,7 +1,8 @@
-body{
+body {
     margin: 0;
     padding: 0;
 }
+
 .chat-page {
     width: 100%;
     height: 100vh;
@@ -26,7 +27,7 @@ body{
 }
 
 .chat-window {
-    flex: 1;    
+    flex: 1;
     height: 100vh;
 
     display: flex;
@@ -411,20 +412,28 @@ body{
 }
 
 .status-dot.online {
-    background: #22c55e;
+    background: #0ceb5d;
 }
 
 .status-dot.offline {
     background: #9ca3af;
 }
 
+.typing-indicator {
+    font-size: 12px;
+    color: #2d9b36cb;
+    font-style: italic;
+    font-weight: bold;
+}
+
 .no-users {
-    padding: 20px;
+    padding: 20px;  
 
     text-align: center;
 
     color: #888;
 }
+
 
 /* -----------------------chat window--------------------------------- */
 .chat-window {
@@ -552,15 +561,15 @@ body{
 }
 
 .message-bubble.mine {
-    background: #2563eb;
+    background: #2585ebfc;
     color: white;
 
     border-bottom-right-radius: 4px;
 }
 
 .message-bubble.theirs {
-    background: white;
-    color: #111827;
+    background: rgba(255, 1, 204, 0.913);
+    color: #ffffff;
 
     border: 1px solid #e5e7eb;
 
@@ -576,11 +585,18 @@ body{
 .message-time {
     margin-top: 4px;
 
-    font-size: 10px;
+    font-size: 9px;
 
     opacity: 0.7;
 
     text-align: right;
+
+}
+
+.message-status {
+    margin-left: 5px;
+    font-Weight: bold;
+
 }
 
 .no-messages {
@@ -945,11 +961,12 @@ body{
 .end-call-button:hover {
     background: #dc2626;
 }
+
 /*  ----------------info-tag-------------------- */
 .infotag {
     width: fit-content;
     max-width: 90%;
-    margin: 0 auto 18px ;
+    margin: 0 auto 18px;
     padding: 8px 14px;
     border-radius: 10px;
     background: #7c7ed14e;
@@ -962,6 +979,7 @@ body{
     color: #607798;
     line-height: 1.0;
 }
+
 /* =========================================
                 RESPONSIVE CHAT UI
    ========================================= */

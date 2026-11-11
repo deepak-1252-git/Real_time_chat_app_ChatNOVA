@@ -4,7 +4,8 @@ function UserItem({
     isSelected,
     lastMessage,
     unreadCount,
-    onClick
+    onClick,
+    isTyping
 }) {
 
     const formatTime = (date) => {
@@ -21,9 +22,8 @@ function UserItem({
 
     return (
         <div
-            className={`user-item ${
-                isSelected ? "selected" : ""
-            }`}
+            className={`user-item ${isSelected ? "selected" : ""
+                }`}
             onClick={onClick}
         >
 
@@ -51,8 +51,15 @@ function UserItem({
 
                     <span className="last-message">
 
-                        {/* {lastMessage?.message || (isOnline ? "Online" : "Offline")} */}
-                        {lastMessage?.message || (isOnline ? "Offline" : "Online")}
+                        {isTyping ?
+                            (
+                                <span className="typing-indicator" >
+                                    typing...
+                                </span>
+                            ) :
+                            /* {lastMessage?.message || (isOnline ? "Online" : "Offline")} */
+                            lastMessage?.message || (isOnline ? "Offline" : "Online")
+                        }
 
                     </span>
 

@@ -5,7 +5,8 @@ function UserList({
     selectedUser,
     onSelectUser,
     lastMessages,
-    unreadCounts
+    unreadCounts,
+    typingUsers
 }) {
 
     return (
@@ -36,6 +37,9 @@ function UserList({
                         }
                         onClick={() =>
                             onSelectUser(onlineUser.userId)
+                        }
+                        isTyping={
+                            typingUsers[String(onlineUser.userId)] === true
                         }
                     />
 

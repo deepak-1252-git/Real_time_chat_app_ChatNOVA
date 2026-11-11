@@ -22,6 +22,12 @@ function MessageBubble({ message, isMine }) {
                         hour: "2-digit",
                         minute: "2-digit"
                     })}
+
+                    {isMine && (
+                        <span className="message-status" style={{color: message.isRead ? "#f52e13" : "#010101" }}>
+                            {message.isRead ? "✓✓" : "✓"}
+                        </span>
+                    )}
                 </div>
 
             </div>

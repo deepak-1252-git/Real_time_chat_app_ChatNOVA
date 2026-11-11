@@ -9,11 +9,16 @@ function useChatSocket(
         onIncomingCall,
         onCallAnswered,
         onIceCandidate,
-        onCallEnded
+        onCallEnded,
+
+        onTyping,
+        onStopTyping,
+        onMessagesRead
     } = {}
 ) {
 
     const [onlineUsers, setOnlineUsers] = useState([]);
+    const activeChatRef = useRef(null);
 
     const callbacksRef = useRef({
         onReceiveMessage,
@@ -21,7 +26,11 @@ function useChatSocket(
         onIncomingCall,
         onCallAnswered,
         onIceCandidate,
-        onCallEnded
+        onCallEnded,
+
+        onTyping,
+        onStopTyping,
+        onMessagesRead
     });
 
     useEffect(() => {
@@ -31,7 +40,11 @@ function useChatSocket(
             onIncomingCall,
             onCallAnswered,
             onIceCandidate,
-            onCallEnded
+            onCallEnded,
+
+            onTyping,
+            onStopTyping,
+            onMessagesRead
         };
     }, [
         onReceiveMessage,
@@ -39,7 +52,11 @@ function useChatSocket(
         onIncomingCall,
         onCallAnswered,
         onIceCandidate,
-        onCallEnded
+        onCallEnded,
+
+        onTyping,
+        onStopTyping,
+        onMessagesRead
     ]);
 
     useEffect(() => {
@@ -59,6 +76,10 @@ function useChatSocket(
                 "userConnected",
                 userId
             );
+
+            socket.emit("activeChat", {
+                userId: activeChatRef.current
+            });
         };
 
         const handleDisconnect = (reason) => {
@@ -121,106 +142,72 @@ function useChatSocket(
             callbacksRef.current.onCallEnded?.();
         };
 
-        socket.on(
-            "connect",
-            handleConnect
-        );
+        const handleUserTyping = ({ senderId }) => {
+            callbacksRef.current.onTyping?.({ senderId });
+        };
 
-        socket.on(
-            "disconnect",
-            handleDisconnect
-        );
+        const handleUserStopTyping = ({ senderId }) => {
+            callbacksRef.current.onStopTyping?.({ senderId });
+        };
 
-        socket.on(
-            "onlineUsers",
-            handleOnlineUsers
-        );
+        const handleMessagesRead = ({ readerId }) => {
+            callbacksRef.current.onMessagesRead?.({ readerId });
+        };
 
-        socket.on(
-            "receiveMessage",
-            handleReceiveMessage
-        );
+        socket.on("connect", handleConnect);
 
-        socket.on(
-            "messageSent",
-            handleMessageSent
-        );
+        socket.on("disconnect", handleDisconnect);
 
-        socket.on(
-            "incomingCall",
-            handleIncomingCall
-        );
+        socket.on("onlineUsers", handleOnlineUsers);
 
-        console.log(
-            "📲 incomingCall listener registered"
-        );
+        socket.on("receiveMessage", handleReceiveMessage);
 
-        socket.on(
-            "callAnswered",
-            handleCallAnswered
-        );
+        socket.on("messageSent", handleMessageSent);
 
-        socket.on(
-            "iceCandidate",
-            handleIceCandidate
-        );
+        socket.on("incomingCall", handleIncomingCall);
 
-        socket.on(
-            "callEnded",
-            handleCallEnded
-        );
+        console.log("📲 incomingCall listener registered");
+
+        socket.on("callAnswered", handleCallAnswered);
+
+        socket.on("iceCandidate", handleIceCandidate);
+
+        socket.on("callEnded", handleCallEnded);
+
+        socket.on("user-typing", handleUserTyping);
+
+        socket.on("user-stop-typing", handleUserStopTyping);
+
+        socket.on("messages-read", handleMessagesRead);
 
         // Socket already connected hai
-        if (socket.connected) {
-            handleConnect();
-        }
+        if (socket.connected) { handleConnect(); }
 
         return () => {
 
-            socket.off(
-                "connect",
-                handleConnect
-            );
+            socket.off("connect", handleConnect);
 
-            socket.off(
-                "disconnect",
-                handleDisconnect
-            );
+            socket.off("disconnect", handleDisconnect);
 
-            socket.off(
-                "onlineUsers",
-                handleOnlineUsers
-            );
+            socket.off("onlineUsers", handleOnlineUsers);
 
-            socket.off(
-                "receiveMessage",
-                handleReceiveMessage
-            );
+            socket.off("receiveMessage", handleReceiveMessage);
 
-            socket.off(
-                "messageSent",
-                handleMessageSent
-            );
+            socket.off("messageSent", handleMessageSent);
 
-            socket.off(
-                "incomingCall",
-                handleIncomingCall
-            );
+            socket.off("incomingCall", handleIncomingCall);
 
-            socket.off(
-                "callAnswered",
-                handleCallAnswered
-            );
+            socket.off("callAnswered", handleCallAnswered);
 
-            socket.off(
-                "iceCandidate",
-                handleIceCandidate
-            );
+            socket.off("iceCandidate", handleIceCandidate);
 
-            socket.off(
-                "callEnded",
-                handleCallEnded
-            );
+            socket.off("callEnded", handleCallEnded);
+
+            socket.off("user-typing", handleUserTyping);
+
+            socket.off("user-stop-typing", handleUserStopTyping);
+
+            socket.off("messages-read", handleMessagesRead);
 
         };
 
@@ -282,13 +269,16 @@ function useChatSocket(
             targetUserId
         });
     };
-    
+
     const setActiveChat = (userId) => {
+        activeChatRef.current = userId
+            ? String(userId)
+            : null;
+
         socket.emit("activeChat", {
-            userId: userId || null
+            userId: activeChatRef.current
         });
     };
-
     const setCallHandlers = useCallback(
         ({
             onIncomingCall,
@@ -307,6 +297,18 @@ function useChatSocket(
         []
     );
 
+    const emitTyping = (recipientId) => {
+        socket.emit("typing", { recipientId });
+    };
+
+    const emitStopTyping = (recipientId) => {
+        socket.emit("stop-typing", { recipientId });
+    };
+
+    const markMessagesRead = (senderId) => {
+        socket.emit("mark-messages-read", { senderId });
+    };
+
     return {
         onlineUsers,
         sendMessage,
@@ -315,7 +317,12 @@ function useChatSocket(
         sendIceCandidate,
         endCall,
         setActiveChat,
-        setCallHandlers
+        setCallHandlers,
+
+        emitTyping,
+        emitStopTyping,
+        markMessagesRead
+
     };
 }
 

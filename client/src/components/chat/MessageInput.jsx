@@ -1,19 +1,80 @@
+import { useRef, useEffect } from "react";
+
 function MessageInput({
     message,
     setMessage,
-    onSend
+    onSend,
+    recipientId,
+    onTyping,
+    onStopTyping
 }) {
+    const typingTimeoutRef = useRef(null);
 
-    const handleKeyDown = (e) => {
+    const callbacksRef = useRef({});
 
-        if (
-            e.key === "Enter" &&
-            !e.shiftKey
-        ) {
-            e.preventDefault();
-            onSend();
+    useEffect(() => {
+        callbacksRef.current = {
+            onTyping,
+            onStopTyping
+        };
+    }, [onTyping, onStopTyping]);
+
+    useEffect(() => {
+        return () => {
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            callbacksRef.current.onStopTyping?.(recipientId);
+        };
+    }, [recipientId]);
+
+    const stopTyping = () => {
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
         }
 
+        if (recipientId) {
+            callbacksRef.current.onStopTyping?.(recipientId);
+        }
+    };
+
+    const handleChange = (e) => {
+        const val = e.target.value;
+
+        setMessage(val);
+
+        if (!recipientId) return;
+
+        if (val.trim()) {
+            callbacksRef.current.onTyping?.(recipientId);
+
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            typingTimeoutRef.current = setTimeout(() => {
+                callbacksRef.current.onStopTyping?.(recipientId);
+                typingTimeoutRef.current = null;
+            }, 1000);
+        } else {
+            stopTyping();
+        }
+    };
+
+    const handleSend = () => {
+        if (!message.trim()) return;
+
+        stopTyping();
+        onSend();
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
     };
 
     return (
@@ -31,16 +92,14 @@ function MessageInput({
                 type="text"
                 placeholder="Type a message..."
                 value={message}
-                onChange={(e) =>
-                    setMessage(e.target.value)
-                }
+                onChange={handleChange}
                 onKeyDown={handleKeyDown}
             />
 
             <button
                 type="button"
                 className="send-button"
-                onClick={onSend}
+                onClick={handleSend}
                 disabled={!message.trim()}
             >
                 ➤

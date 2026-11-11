@@ -2,6 +2,7 @@ function ChatHeader({
     headerUsername,
     selectedUser,
     isOnline,
+    isTyping,
     onBack,
     onAudioCall,
     onVideoCall
@@ -39,9 +40,16 @@ function ChatHeader({
                                 }`}
                         ></span>
 
-                        {isOnline ? "Online" : "Offline"}
-
+                        {isTyping ?
+                            (
+                                <span className="typing-indicator" >
+                                    typing...
+                                </span>
+                            ) :
+                            isOnline ? "Online" : "Offline"
+                        }
                     </span>
+
                 </div>
 
             </div>

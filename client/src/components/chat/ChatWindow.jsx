@@ -14,7 +14,11 @@ function ChatWindow({
     isOnline,
     onAudioCall,
     onVideoCall,
-    onBack
+    onBack,
+
+    isTyping,
+    onTyping,
+    onStopTyping
 }) {
 
     if (!selectedUser) {
@@ -32,6 +36,7 @@ function ChatWindow({
                 headerUsername={headerUsername}
                 selectedUser={selectedUser}
                 isOnline={isOnline}
+                isTyping={isTyping}
                 onBack={onBack}
                 onAudioCall={onAudioCall}
                 onVideoCall={onVideoCall}
@@ -46,6 +51,9 @@ function ChatWindow({
                 message={message}
                 setMessage={setMessage}
                 onSend={onSend}
+                recipientId={selectedUser?._id || selectedUser}
+                onTyping={onTyping}
+                onStopTyping={onStopTyping}
             />
 
         </main>

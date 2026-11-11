@@ -21,6 +21,7 @@ function Chat() {
     const [lastMessages, setLastMessages] = useState({});
     const [unreadCounts, setUnreadCounts] = useState({});
     const [showChat, setShowChat] = useState(false);
+    const [typingUsers, setTypingUsers] = useState({});
 
     const messagesEndRef = useRef(null);
     const remoteAudioRef = useRef(null);
@@ -117,9 +118,37 @@ function Chat() {
         [selectedUser]
     );
 
+    const handleTyping = useCallback(({ senderId }) => {
+        setTypingUsers((prev) => ({
+            ...prev,
+            [String(senderId)]: true
+        }));
+    }, []);
+
+    const handleStopTyping = useCallback(({ senderId }) => {
+        setTypingUsers((prev) => ({
+            ...prev,
+            [String(senderId)]: false
+        }));
+    }, []);
+
+    const handleMessagesRead = useCallback(({ readerId }) => {
+        if (selectedUser && String(readerId) === String(selectedUser)) {
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) => ({
+                    ...msg,
+                    isRead: true
+                }))
+            );
+        }
+    }, [selectedUser]);
+
     const {
         onlineUsers,
         sendMessage: sendSocketMessage,
+        emitTyping,
+        emitStopTyping,
+        markMessagesRead,
         callUser: sendCallUser,
         acceptCall: sendCallAccepted,
         sendIceCandidate,
@@ -131,6 +160,10 @@ function Chat() {
         {
             onReceiveMessage: handleReceiveMessage,
             onMessageSent: handleMessageSent,
+
+            onTyping: handleTyping,
+            onStopTyping: handleStopTyping,
+            onMessagesRead: handleMessagesRead
 
         }
     );
@@ -335,6 +368,11 @@ function Chat() {
         }
 
         const messageText = message.trim();
+
+        if (emitStopTyping) {
+            emitStopTyping(selectedUser);
+        }
+
 
         sendSocketMessage(
             selectedUser,
@@ -818,9 +856,7 @@ function Chat() {
     const selectUser = async (userId) => {
 
         setSelectedUser(userId);
-
         setActiveChat(userId);
-
         setMessages([]);
 
         try {
@@ -845,7 +881,9 @@ function Chat() {
             );
 
         }
-
+        if (markMessagesRead) {
+            markMessagesRead(userId);
+        }
         setUnreadCounts((prev) => ({
             ...prev,
             [userId]: 0
@@ -857,9 +895,11 @@ function Chat() {
     };
 
     const handleBackToSidebar = () => {
-
+        if (selectedUser && emitStopTyping) {
+            emitStopTyping(selectedUser);
+        }
         setActiveChat(null);
-
+        setSelectedUser(null);
         setShowChat(false);
     };
 
@@ -875,6 +915,7 @@ function Chat() {
                 setSearchText={setSearchText}
                 lastMessages={lastMessages}
                 unreadCounts={unreadCounts}
+                typingUsers={typingUsers}
             />
 
             <ChatWindow
@@ -893,6 +934,9 @@ function Chat() {
                 onBack={handleBackToSidebar}
                 onAudioCall={startAudioCall}
                 onVideoCall={startVideoCall}
+                isTyping={typingUsers[String(selectedUser)] === true}
+                onTyping={emitTyping}
+                onStopTyping={emitStopTyping}
             />
 
             {callStatus === "calling" && (
