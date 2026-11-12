@@ -152,6 +152,8 @@ function Chat() {
         callUser: sendCallUser,
         acceptCall: sendCallAccepted,
         sendIceCandidate,
+        sendIceRestartOffer,
+        sendIceRestartAnswer,
         endCall: sendSocketEndCall,
         setActiveChat,
         setCallHandlers
@@ -198,7 +200,21 @@ function Chat() {
 
     }, []);
 
+    const handleMediaCleanup = useCallback(() => {
+        if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = null;
+        }
 
+        if (localVideoRef.current) {
+            localVideoRef.current.srcObject = null;
+        }
+
+        if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+        }
+
+        console.log("🧹 Media elements cleaned");
+    }, []);
 
     const {
         peerConnectionRef,
@@ -230,26 +246,16 @@ function Chat() {
 
         handleCallAnswered,
         handleRemoteIceCandidate,
+        handleIceRestartOffer,
+        handleIceRestartAnswer,
         cleanupCall,
         handleCallEnded
     } = useWebRTC({
         sendIceCandidate,
+        sendIceRestartOffer,
+        sendIceRestartAnswer,
         onRemoteStream: handleRemoteStream,
-        onCallCleanup: () => {
-            if (remoteAudioRef.current) {
-                remoteAudioRef.current.srcObject = null;
-            }
-
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = null;
-            }
-
-            if (remoteVideoRef.current) {
-                remoteVideoRef.current.srcObject = null;
-            }
-
-            console.log("🧹 Media elements cleaned");
-        }
+        onCallCleanup: handleMediaCleanup
     });
 
     // --------------------------------------------------------------------
@@ -267,16 +273,20 @@ function Chat() {
             },
 
             onCallAnswered: handleCallAnswered,
-
             onIceCandidate: handleRemoteIceCandidate,
+            onCallEnded: handleCallEnded,
 
-            onCallEnded: handleCallEnded
+            onIceRestartOffer: handleIceRestartOffer,
+            onIceRestartAnswer: handleIceRestartAnswer,
         });
     }, [
         setCallHandlers,
         handleCallAnswered,
         handleRemoteIceCandidate,
-        handleCallEnded
+        handleCallEnded,
+
+        handleIceRestartOffer,
+        handleIceRestartAnswer
     ]);
 
     // --------------------------------------------------------------------
@@ -503,7 +513,7 @@ function Chat() {
         }
 
         const peerConnection =
-            createPeerConnection(selectedUser);
+            createPeerConnection(selectedUser, true);
 
         const stream =
             await getMicrophoneStream();
@@ -572,7 +582,7 @@ function Chat() {
         }
 
         const peerConnection =
-            createPeerConnection(selectedUser);
+            createPeerConnection(selectedUser, true);
 
         const stream =
             await getVideoStream();
@@ -825,18 +835,6 @@ function Chat() {
                 : null;
 
         cleanupCall();
-
-        if (remoteAudioRef.current) {
-            remoteAudioRef.current.srcObject = null;
-        }
-
-        if (localVideoRef.current) {
-            localVideoRef.current.srcObject = null;
-        }
-
-        if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = null;
-        }
 
         if (targetId) {
             console.log("📴 Sending endCall to:", targetId);

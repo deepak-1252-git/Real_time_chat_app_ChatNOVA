@@ -223,9 +223,6 @@ io.on("connection", (socket) => {
             // Send to sender
             socket.emit("messageSent", messageData);
 
-            // If receiver is already reading this conversation,
-            // immediately notify the sender.
-
             if (newMessage.isRead) {
                 const senderSockets = onlineUsers.get(
                     String(socket.userId)
@@ -276,26 +273,6 @@ io.on("connection", (socket) => {
 
     });
 
-    //-----------------------------------------
-    // socket.on(
-    "iceCandidate",
-        ({ targetUserId, candidate }) => {
-
-            const targetSocketId = onlineUsers.get(targetUserId);
-
-            if (!targetSocketId) {
-                return;
-            }
-
-            io.to(targetSocketId).emit(
-                "iceCandidate",
-                {
-                    candidate
-                }
-            );
-
-        }
-    // );
     // /----------------------------
 
     socket.on(
@@ -430,8 +407,7 @@ io.on("connection", (socket) => {
 
             const targetId = String(targetUserId);
 
-            const targetSockets =
-                onlineUsers.get(targetId);
+            const targetSockets = onlineUsers.get(targetId);
 
             if (!targetSockets || targetSockets.size === 0) {
                 return;
@@ -449,6 +425,48 @@ io.on("connection", (socket) => {
             }
         }
     );
+
+    // -------restart offer--------restart answer---------
+
+    socket.on("iceRestartOffer", ({ targetUserId, offer }) => {
+
+        const targetId = String(targetUserId);
+        const targetSockets = onlineUsers.get(targetId);
+
+        if (!targetSockets || targetSockets.size === 0) {
+            console.log("ICE restart offer: target user not found");
+            return;
+        }
+
+        for (const socketId of targetSockets) {
+            io.to(socketId).emit("iceRestartOffer", {
+                callerId: String(socket.userId),
+                offer
+            });
+        }
+
+        console.log("ICE restart offer forwarded to:", targetId);
+    });
+
+    socket.on("iceRestartAnswer", ({ targetUserId, answer }) => {
+
+        const targetId = String(targetUserId);
+        const targetSockets = onlineUsers.get(targetId);
+
+        if (!targetSockets || targetSockets.size === 0) {
+            console.log("ICE restart answer: target user not found");
+            return;
+        }
+
+        for (const socketId of targetSockets) {
+            io.to(socketId).emit("iceRestartAnswer", {
+                answer
+            });
+        }
+
+        console.log("ICE restart answer forwarded to:", targetId);
+    });
+
     // ----------------------------
 
     socket.on("hello", (message) => {

@@ -11,6 +11,9 @@ function useChatSocket(
         onIceCandidate,
         onCallEnded,
 
+        onIceRestartOffer,
+        onIceRestartAnswer,
+
         onTyping,
         onStopTyping,
         onMessagesRead
@@ -28,6 +31,9 @@ function useChatSocket(
         onIceCandidate,
         onCallEnded,
 
+        onIceRestartOffer,
+        onIceRestartAnswer,
+
         onTyping,
         onStopTyping,
         onMessagesRead
@@ -35,13 +41,10 @@ function useChatSocket(
 
     useEffect(() => {
         callbacksRef.current = {
+            ...callbacksRef.current,
+
             onReceiveMessage,
             onMessageSent,
-            onIncomingCall,
-            onCallAnswered,
-            onIceCandidate,
-            onCallEnded,
-
             onTyping,
             onStopTyping,
             onMessagesRead
@@ -49,11 +52,6 @@ function useChatSocket(
     }, [
         onReceiveMessage,
         onMessageSent,
-        onIncomingCall,
-        onCallAnswered,
-        onIceCandidate,
-        onCallEnded,
-
         onTyping,
         onStopTyping,
         onMessagesRead
@@ -142,6 +140,16 @@ function useChatSocket(
             callbacksRef.current.onCallEnded?.();
         };
 
+        const handleIceRestartOffer = (data) => {
+            console.log("Received ICE restart offer:", data);
+            callbacksRef.current.onIceRestartOffer?.(data);
+        };
+
+        const handleIceRestartAnswer = (data) => {
+            console.log("Received ICE restart answer:", data);
+            callbacksRef.current.onIceRestartAnswer?.(data);
+        };
+
         const handleUserTyping = ({ senderId }) => {
             callbacksRef.current.onTyping?.({ senderId });
         };
@@ -174,10 +182,11 @@ function useChatSocket(
 
         socket.on("callEnded", handleCallEnded);
 
+        socket.on("iceRestartOffer", handleIceRestartOffer);
+        socket.on("iceRestartAnswer", handleIceRestartAnswer);
+
         socket.on("user-typing", handleUserTyping);
-
         socket.on("user-stop-typing", handleUserStopTyping);
-
         socket.on("messages-read", handleMessagesRead);
 
         // Socket already connected hai
@@ -203,10 +212,11 @@ function useChatSocket(
 
             socket.off("callEnded", handleCallEnded);
 
+            socket.off("iceRestartOffer", handleIceRestartOffer);
+            socket.off("iceRestartAnswer", handleIceRestartAnswer);
+
             socket.off("user-typing", handleUserTyping);
-
             socket.off("user-stop-typing", handleUserStopTyping);
-
             socket.off("messages-read", handleMessagesRead);
 
         };
@@ -251,15 +261,43 @@ function useChatSocket(
         });
     };
 
-    const sendIceCandidate = ({ targetUserId, candidate }) => {
-        if (!targetUserId || !candidate) {
-            return;
-        }
-        socket.emit("iceCandidate", {
-            targetUserId,
-            candidate
-        });
-    };
+    const sendIceCandidate = useCallback(
+
+        ({ targetUserId, candidate }) => {
+
+            if (!targetUserId || !candidate) {
+                return;
+            }
+            socket.emit("iceCandidate", {
+                targetUserId,
+                candidate
+            });
+
+        }, []);
+
+    const sendIceRestartOffer = useCallback(
+
+        ({ targetUserId, offer }) => {
+            if (!targetUserId || !offer) return;
+
+            socket.emit("iceRestartOffer", {
+                targetUserId,
+                offer
+            });
+
+        }, []);
+
+    const sendIceRestartAnswer = useCallback(
+
+        ({ targetUserId, answer }) => {
+            if (!targetUserId || !answer) return;
+
+            socket.emit("iceRestartAnswer", {
+                targetUserId,
+                answer
+            });
+            
+        }, []);
 
     const endCall = (targetUserId) => {
         if (!targetUserId) {
@@ -284,14 +322,18 @@ function useChatSocket(
             onIncomingCall,
             onCallAnswered,
             onIceCandidate,
-            onCallEnded
+            onCallEnded,
+            onIceRestartOffer,
+            onIceRestartAnswer
         }) => {
             callbacksRef.current = {
                 ...callbacksRef.current,
                 onIncomingCall,
                 onCallAnswered,
                 onIceCandidate,
-                onCallEnded
+                onCallEnded,
+                onIceRestartOffer,
+                onIceRestartAnswer
             };
         },
         []
@@ -315,6 +357,10 @@ function useChatSocket(
         callUser,
         acceptCall,
         sendIceCandidate,
+
+        sendIceRestartOffer,
+        sendIceRestartAnswer,
+
         endCall,
         setActiveChat,
         setCallHandlers,
