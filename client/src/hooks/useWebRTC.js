@@ -66,20 +66,45 @@ function useWebRTC({
                 });
             };
 
+            // peerConnection.ontrack = (event) => {
+            //     const remoteStream = event.streams[0];
+
+            //     if (!remoteStream) return;
+
+            //     console.log(
+            //         "🔥 REMOTE STREAM RECEIVED:",
+            //         remoteStream
+            //     );
+
+            //     remoteStreamRef.current = remoteStream;
+
+            //     onRemoteStream?.(remoteStream);
+            // };
             peerConnection.ontrack = (event) => {
-                const remoteStream = event.streams[0];
+                console.log("📡 REMOTE TRACK RECEIVED:", {
+                    kind: event.track.kind,
+                    id: event.track.id,
+                    enabled: event.track.enabled,
+                    muted: event.track.muted,
+                    readyState: event.track.readyState,
+                    streams: event.streams.length
+                });
 
-                if (!remoteStream) return;
+                let remoteStream = event.streams[0];
 
-                console.log(
-                    "🔥 REMOTE STREAM RECEIVED:",
-                    remoteStream
-                );
+                if (!remoteStream) {
+                    remoteStream = remoteStreamRef.current || new MediaStream();
+                    remoteStream.addTrack(event.track);
+                }
 
                 remoteStreamRef.current = remoteStream;
 
+                console.log("📹 REMOTE VIDEO TRACKS:", remoteStream.getVideoTracks());
+                console.log("🔊 REMOTE AUDIO TRACKS:", remoteStream.getAudioTracks());
+
                 onRemoteStream?.(remoteStream);
             };
+
 
             peerConnection.onconnectionstatechange = () => {
                 console.log(
