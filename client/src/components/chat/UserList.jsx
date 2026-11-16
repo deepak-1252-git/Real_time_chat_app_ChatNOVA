@@ -25,6 +25,7 @@ function UserList({
                     <UserItem
                         key={onlineUser.userId}
                         username={onlineUser.username}
+                        profilePicture={onlineUser.profilePicture}
                         isOnline={onlineUser.status === "online"}
                         isSelected={
                             String(selectedUser) === String(onlineUser.userId)

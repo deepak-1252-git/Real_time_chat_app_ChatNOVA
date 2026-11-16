@@ -5,6 +5,7 @@ import EmptyChat from "./EmptyChat";
 
 function ChatWindow({
     headerUsername,
+    profilePicture,
     selectedUser,
     messages,
     message,
@@ -34,6 +35,7 @@ function ChatWindow({
 
             <ChatHeader
                 headerUsername={headerUsername}
+                profilePicture={profilePicture}
                 selectedUser={selectedUser}
                 isOnline={isOnline}
                 isTyping={isTyping}

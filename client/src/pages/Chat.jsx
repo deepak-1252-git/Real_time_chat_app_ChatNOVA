@@ -12,6 +12,30 @@ import "../styles/chat.css";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+function playMessageNotificationSound() {
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const context = new AudioContextClass();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(740, context.currentTime);
+        oscillator.frequency.setValueAtTime(560, context.currentTime + 0.10);
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.23);
+        oscillator.onended = () => context.close();
+    } catch (error) {
+        // Browsers may block audio until the user interacts with the page.
+        console.debug("Notification sound unavailable:", error);
+    }
+}
+
 function Chat() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [searchText, setSearchText] = useState("");
@@ -33,6 +57,11 @@ function Chat() {
     const user = storedUser ? JSON.parse(storedUser) : null;
 
     useEffect(() => {
+        const savedTheme = localStorage.getItem("chatnova_theme") || "light";
+        document.body.setAttribute("data-chatnova-theme", savedTheme);
+    }, []);
+
+    useEffect(() => {
 
         messagesEndRef.current?.scrollIntoView({
             behavior: "smooth"
@@ -49,6 +78,12 @@ function Chat() {
             console.log("New message:", newMessage);
 
             const senderId = String(newMessage.senderId);
+
+            const isOutsideActiveChat = senderId !== String(selectedUser);
+            const soundEnabled = localStorage.getItem("chatnova_notification_sound") !== "false";
+            if (soundEnabled && (isOutsideActiveChat || document.hidden)) {
+                playMessageNotificationSound();
+            }
 
             setLastMessages((prev) => ({
                 ...prev,
@@ -299,6 +334,7 @@ function Chat() {
             String(selectedUser));
 
     const selectedUsername = selectedUserData?.username || selectedUser;
+    const selectedUserPicture = selectedUserData?.profilePicture || "";
 
     const callerUserData = onlineUsers.find(
         (onlineUser) =>
@@ -307,6 +343,7 @@ function Chat() {
     );
 
     const callerUsername = callerUserData?.username || caller;
+    const callerUserPicture = callerUserData?.profilePicture || "";
 
 
     useEffect(() => {
@@ -919,6 +956,7 @@ function Chat() {
             <ChatWindow
                 selectedUser={selectedUser}
                 headerUsername={selectedUsername}
+                profilePicture={selectedUserPicture}
                 messages={messages}
                 message={message}
                 setMessage={setMessage}
@@ -941,6 +979,7 @@ function Chat() {
                 <CallingOverlay
                     selectedUser={selectedUser}
                     displayName={selectedUsername}
+                    profilePicture={selectedUserPicture}
                     callType={callType}
                     onEndCall={() => endCall(selectedUser)}
                 />
@@ -950,6 +989,7 @@ function Chat() {
                 <IncomingCallOverlay
                     caller={caller}
                     displayName={callerUsername}
+                    profilePicture={callerUserPicture}
                     callType={callType}
                     onAccept={
                         callType === "video"
@@ -966,6 +1006,7 @@ function Chat() {
                         caller={caller}
                         selectedUser={selectedUser}
                         displayName={selectedUsername}
+                        profilePicture={selectedUserPicture}
                         callType={callType}
                         isMuted={isMuted}
                         onMute={toggleMute}

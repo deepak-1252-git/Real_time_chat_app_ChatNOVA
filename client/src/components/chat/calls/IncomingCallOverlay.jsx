@@ -1,6 +1,9 @@
+import Avatar from "../Avatar";
+
 function IncomingCallOverlay({
     caller,
     displayName,
+    profilePicture,
     callType,
     onAccept,
     onReject
@@ -10,9 +13,13 @@ function IncomingCallOverlay({
 
             <div className="call-test-box">
 
-                <div className="call-avatar">
-                    👤
-                </div>
+                <Avatar
+                    src={profilePicture}
+                    name={displayName || caller}
+                    className="call-avatar"
+                    size={80}
+                    fallback="👤"
+                />
 
                 <h2>
                     {displayName || caller}
@@ -41,7 +48,7 @@ function IncomingCallOverlay({
                     <button
                         type="button"
                         className="reject-call-button"
-                        
+
                         onClick={onReject}
                     >
                         ❌ Reject

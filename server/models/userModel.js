@@ -29,6 +29,12 @@ const userSchema = new mongoose.Schema(
         status: {
             type: String,
             default: "offline"
+        },
+
+        preferences: {
+            theme: { type: String, enum: ["light", "dark"], default: "light" },
+            notificationSound: { type: Boolean, default: true },
+            showOnlineStatus: { type: Boolean, default: true }
         }
     },
     {

@@ -1,7 +1,10 @@
+import Avatar from "../Avatar";
+
 function ConnectedCallOverlay({
     caller,
     selectedUser,
     displayName,
+    profilePicture,
     callType,
     isMuted,
     onMute,
@@ -12,11 +15,13 @@ function ConnectedCallOverlay({
 
             <div className="call-test-box">
 
-                <div className="call-avatar">
-                    {callType === "video"
-                        ? "📹"
-                        : "🎙️"}
-                </div>
+                <Avatar
+                    src={profilePicture}
+                    name={displayName || caller || selectedUser}
+                    className="call-avatar"
+                    size={80}
+                    fallback={callType === "video" ? "📹" : "🎙️"}
+                />
 
                 <h2>
                     {displayName || caller || selectedUser}

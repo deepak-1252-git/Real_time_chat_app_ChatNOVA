@@ -549,15 +549,15 @@ const sendOnlineUsers = async () => {
         ];
 
         const onlineUsersData = await User.find({
-            _id: {
-                $in: onlineUserIds
-            }
-        }).select("_id username");
+            _id: { $in: onlineUserIds },
+            "preferences.showOnlineStatus": { $ne: false }
+        }).select("_id username profilePicture");
 
         const onlineUserList =
             onlineUsersData.map((user) => ({
                 userId: String(user._id),
-                username: user.username
+                username: user.username,
+                profilePicture: user.profilePicture || ""
             }));
 
         for (
@@ -593,6 +593,9 @@ const sendOnlineUsers = async () => {
     }
 
 };
+
+// Expose the online-list refresh function to authenticated controllers.
+app.locals.refreshOnlineUsers = sendOnlineUsers;
 
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)

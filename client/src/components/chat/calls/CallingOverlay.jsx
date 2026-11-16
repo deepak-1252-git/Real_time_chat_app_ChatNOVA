@@ -1,6 +1,9 @@
+import Avatar from "../Avatar";
+
 function CallingOverlay({
     selectedUser,
     displayName,
+    profilePicture,
     callType,
     onEndCall
 }) {
@@ -9,9 +12,13 @@ function CallingOverlay({
 
             <div className="call-test-box">
 
-                <div className="call-avatar">
-                    👤
-                </div>
+                <Avatar
+                    src={profilePicture}
+                    name={displayName || selectedUser}
+                    className="call-avatar"
+                    size={80}
+                    fallback="👤"
+                />
 
                 <h2>
                     {displayName || selectedUser}

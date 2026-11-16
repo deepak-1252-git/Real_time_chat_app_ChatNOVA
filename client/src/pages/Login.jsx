@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/auth.css";
+import socket from "../socket";
 
 function Login() {
 
@@ -42,6 +43,7 @@ function Login() {
                     JSON.stringify(data.user)
                 );
 
+                socket.connect();
                 navigate("/chat");
             } else {
                 setError(data.message || "Login failed");

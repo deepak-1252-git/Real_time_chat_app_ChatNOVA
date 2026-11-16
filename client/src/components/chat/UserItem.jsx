@@ -1,5 +1,8 @@
+import Avatar from "./Avatar";
+
 function UserItem({
     username,
+    profilePicture,
     isOnline,
     isSelected,
     lastMessage,
@@ -27,9 +30,12 @@ function UserItem({
             onClick={onClick}
         >
 
-            <div className="user-avatar">
-                👤
-            </div>
+            <Avatar
+                src={profilePicture}
+                name={username}
+                className="user-avatar"
+                size={45}
+            />
 
             <div className="user-info">
 

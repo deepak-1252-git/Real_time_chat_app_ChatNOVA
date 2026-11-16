@@ -1,5 +1,8 @@
+import Avatar from "./Avatar";
+
 function ChatHeader({
     headerUsername,
+    profilePicture,
     selectedUser,
     isOnline,
     isTyping,
@@ -21,10 +24,13 @@ function ChatHeader({
             </button>
 
             <div className="chat-user-info">
-
-                <div className="chat-user-avatar">
-                    👤
-                </div>
+                
+                <Avatar
+                    src={profilePicture}
+                    name={headerUsername}
+                    className="chat-user-avatar"
+                    size={44}
+                />
 
                 <div>
                     <h3>
