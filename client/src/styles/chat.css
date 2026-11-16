@@ -1498,23 +1498,15 @@ body {
     line-height: 1.45;
 }
 
-.settings-option select {
-    min-width: 105px;
-    padding: 8px 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    background: #fff;
-    color: #172033;
-    font: inherit;
-}
-
 .settings-switch {
     position: relative;
+    display: flex;
+    align-items: center;
     width: 46px;
     height: 26px;
     flex: 0 0 auto;
     border: 0;
-    border-radius: 999px;
+    border-radius: 5px;
     padding: 3px;
     background: #cbd5e1;
     cursor: pointer;
@@ -1522,7 +1514,10 @@ body {
 }
 
 .settings-switch span {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -1559,19 +1554,269 @@ body {
     color: #15803d;
 }
 
+
+
+/* Notification tone selector and preview */
+.settings-sound-option {
+    align-items: flex-start;
+}
+
+.settings-sound-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.settings-preview-button {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #f8fafc;
+    color: #334155;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.settings-preview-button:hover {
+    background: #e2e8f0;
+}
+
+
+@media (max-width: 520px) {
+    .settings-sound-option {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .settings-sound-controls {
+        width: 100%;
+    }
+
+    .settings-sound-controls select {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+
+
+
+/* Compact security row inside Settings */
+.settings-security-section {
+    padding-top: 20px;
+    margin-top: 4px;
+}
+
+.settings-password-heading {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 12px;
+}
+
+.settings-password-heading strong {
+    color: #172033;
+    font-size: 14px;
+}
+
+.settings-password-heading span {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.settings-password-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.settings-password-card-copy {
+    display: grid;
+    gap: 5px;
+}
+
+.settings-password-card-copy strong {
+    color: #172033;
+    font-size: 13px;
+}
+
+.settings-password-card-copy span {
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.settings-password-open {
+    flex: 0 0 auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: #fff;
+    color: #0f766e;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.settings-password-open:hover {
+    background: #f0fdfa;
+    border-color: #99f6e4;
+}
+
+.settings-password-open:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+/* Dedicated Change Password dialog */
+.change-password-backdrop {
+    z-index: 1200;
+}
+
+.change-password-modal {
+    width: min(100%, 440px);
+    max-height: min(90vh, 680px);
+    overflow-y: auto;
+}
+
+.change-password-subtitle {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.change-password-form {
+    display: grid;
+    gap: 14px;
+    padding-top: 8px;
+}
+
+.change-password-form>label:not(.change-password-show-toggle) {
+    display: grid;
+    gap: 6px;
+}
+
+.change-password-form label>span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.change-password-form input:not([type="checkbox"]) {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #172033;
+    font: inherit;
+    font-size: 13px;
+}
+
+.change-password-form input:focus {
+    outline: 2px solid #0f766e;
+    outline-offset: 1px;
+}
+
+.change-password-form input:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.change-password-show-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    cursor: pointer;
+}
+
+.change-password-show-toggle input {
+    accent-color: #0f766e;
+}
+
+.change-password-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-top: 4px;
+}
+
+.change-password-actions button {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.change-password-cancel {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+}
+
+.change-password-actions .settings-password-submit {
+    margin: 0;
+    justify-self: auto;
+    border: 0;
+}
+
+.change-password-actions button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+@media (max-width: 480px) {
+    .settings-password-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .settings-password-open {
+        width: 100%;
+    }
+
+    .change-password-actions {
+        flex-direction: column-reverse;
+    }
+
+    .change-password-actions button {
+        width: 100%;
+    }
+}
+
+
+
 /* ChatNOVA dark theme */
 body[data-chatnova-theme="dark"] {
-    background: #0f172a;
+    background: #121315;
     color: #e2e8f0;
 }
 
 body[data-chatnova-theme="dark"] .chat-page,
-body[data-chatnova-theme="dark"] .chat-window {
-    background: #0f172a;
+body[data-chatnova-theme="dark"] .chat-window,
+body[data-chatnova-theme="dark"] .message-list {
+    background: #121315;
 }
 
-body[data-chatnova-theme="dark"] .chat-sidebar {
-    background: #142b2a;
+body[data-chatnova-theme="dark"] .chat-sidebar,
+body[data-chatnova-theme="dark"] .user-list,
+body[data-chatnova-theme="dark"] .chat-header {
+    background: #182744;
     border-color: #263b3a;
 }
 
@@ -1594,11 +1839,6 @@ body[data-chatnova-theme="dark"] .last-message,
 body[data-chatnova-theme="dark"] .last-time,
 body[data-chatnova-theme="dark"] .chat-user-status {
     color: #94a3b8;
-}
-
-body[data-chatnova-theme="dark"] .user-list,
-body[data-chatnova-theme="dark"] .message-list {
-    background: #0f172a;
 }
 
 body[data-chatnova-theme="dark"] .user-item:hover,
@@ -1681,4 +1921,49 @@ body[data-chatnova-theme="dark"] .profile-edit-form input {
 body[data-chatnova-theme="dark"] .profile-modal-close {
     background: #334155;
     color: #e2e8f0;
+}
+
+body[data-chatnova-theme="dark"] .settings-preview-button {
+    background: #263449;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+body[data-chatnova-theme="dark"] .settings-preview-button:hover {
+    background: #334155;
+}
+
+
+body[data-chatnova-theme="dark"] .settings-password-heading strong,
+body[data-chatnova-theme="dark"] .settings-password-card-copy strong {
+    color: #e2e8f0;
+}
+
+body[data-chatnova-theme="dark"] .settings-password-heading span,
+body[data-chatnova-theme="dark"] .settings-password-card-copy span,
+body[data-chatnova-theme="dark"] .change-password-subtitle,
+body[data-chatnova-theme="dark"] .change-password-form label>span {
+    color: #94a3b8;
+}
+
+body[data-chatnova-theme="dark"] .settings-password-card {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body[data-chatnova-theme="dark"] .settings-password-open,
+body[data-chatnova-theme="dark"] .change-password-cancel {
+    background: #263449;
+    border-color: #475569;
+    color: #e2e8f0;
+}
+
+body[data-chatnova-theme="dark"] .settings-password-open:hover {
+    background: #334155;
+}
+
+body[data-chatnova-theme="dark"] .change-password-form input:not([type="checkbox"]) {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-color: #475569;
 }

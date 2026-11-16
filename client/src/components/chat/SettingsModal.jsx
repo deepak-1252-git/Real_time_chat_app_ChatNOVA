@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { MoonIcon, SunDimIcon } from 'lucide-react';
+import { NOTIFICATION_SOUND_OPTIONS, playNotificationSound } from "../../utils/notificationSounds";
+import ChangePasswordModal from './ChangePasswordModal';
 
 const DEFAULT_SETTINGS = {
     theme: "light",
     notificationSound: true,
+    notificationSoundType: "default",
     showOnlineStatus: true
 };
 
@@ -18,6 +22,7 @@ function SettingsModal({ onClose }) {
     const [savingKey, setSavingKey] = useState("");
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -34,13 +39,15 @@ function SettingsModal({ onClose }) {
                 setSettings(next);
                 applyTheme(next.theme);
                 localStorage.setItem("chatnova_notification_sound", String(next.notificationSound));
+                localStorage.setItem("chatnova_notification_sound_type", next.notificationSoundType || "default");
                 localStorage.setItem("chatnova_show_online_status", String(next.showOnlineStatus));
             } catch (loadError) {
                 if (active) {
                     const savedTheme = localStorage.getItem("chatnova_theme") || "light";
                     const savedSound = localStorage.getItem("chatnova_notification_sound") !== "false";
                     const savedOnline = localStorage.getItem("chatnova_show_online_status") !== "false";
-                    setSettings({ theme: savedTheme, notificationSound: savedSound, showOnlineStatus: savedOnline });
+                    const savedSoundType = localStorage.getItem("chatnova_notification_sound_type") || "default";
+                    setSettings({ ...DEFAULT_SETTINGS, theme: savedTheme, notificationSound: savedSound, notificationSoundType: savedSoundType, showOnlineStatus: savedOnline });
                     applyTheme(savedTheme);
                     setError(loadError.message || "Could not load saved settings. Local preferences are shown.");
                 }
@@ -58,7 +65,7 @@ function SettingsModal({ onClose }) {
         };
         document.addEventListener("keydown", onKeyDown);
         return () => document.removeEventListener("keydown", onKeyDown);
-    }, [onClose, savingKey]);
+    }, [onClose, savingKey, showPasswordModal]);
 
     const updateSetting = async (key, value) => {
         setError("");
@@ -84,6 +91,7 @@ function SettingsModal({ onClose }) {
             setSettings({ ...DEFAULT_SETTINGS, ...(data.preferences || next) });
             if (key === "theme") applyTheme(value);
             if (key === "notificationSound") localStorage.setItem("chatnova_notification_sound", String(value));
+            if (key === "notificationSoundType") localStorage.setItem("chatnova_notification_sound_type", value);
             if (key === "showOnlineStatus") localStorage.setItem("chatnova_show_online_status", String(value));
             setNotice("Setting saved.");
         } catch (saveError) {
@@ -107,27 +115,99 @@ function SettingsModal({ onClose }) {
                     <div className="settings-options">
                         <div className="settings-option">
                             <div><strong>Appearance</strong><span>Choose light or dark mode.</span></div>
-                            <select aria-label="Theme" value={settings.theme} disabled={Boolean(savingKey)} onChange={(event) => updateSetting("theme", event.target.value)}>
-                                <option value="light">Light</option>
-                                <option value="dark">Dark</option>
-                            </select>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={settings.theme}
+                                aria-label="Toggle dark mode"
+                                className={`settings-switch ${settings.theme === "dark" ? "is-on" : ""}`}
+                                disabled={Boolean(savingKey)}
+                                onClick={() =>
+                                    updateSetting(
+                                        "theme",
+                                        settings.theme === "light" ? "dark" : "light"
+                                    )
+                                }
+                            >
+                                <span>
+                                    {settings.theme === "light" ? <SunDimIcon /> : <MoonIcon />}
+                                </span>
+
+                            </button>
                         </div>
 
                         <div className="settings-option">
                             <div><strong>Notification sound</strong><span>Play a sound when a new message arrives outside the open chat.</span></div>
-                            <button type="button" role="switch" aria-checked={settings.notificationSound} aria-label="Notification sound" className={`settings-switch ${settings.notificationSound ? "is-on" : ""}`} disabled={Boolean(savingKey)} onClick={() => updateSetting("notificationSound", !settings.notificationSound)}><span /></button>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={settings.notificationSound}
+                                aria-label="Notification sound"
+                                className={`settings-switch ${settings.notificationSound ? "is-on" : ""}`}
+                                disabled={Boolean(savingKey)}
+                                onClick={() => updateSetting("notificationSound", !settings.notificationSound)}
+                            ><span /></button>
+                        </div>
+
+                        <div className="settings-option settings-sound-option">
+                            <div><strong>Notification tone</strong><span>Choose a sound and preview it before saving.</span></div>
+                            <div className="settings-sound-controls">
+                                <select
+                                    aria-label="Notification tone"
+                                    value={settings.notificationSoundType || "default"}
+                                    disabled={Boolean(savingKey)}
+                                    onChange={(event) => updateSetting("notificationSoundType", event.target.value)}
+                                >
+                                    {NOTIFICATION_SOUND_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    className="settings-preview-button"
+                                    onClick={() => playNotificationSound(settings.notificationSoundType)}
+                                    aria-label="Preview selected notification tone"
+                                >
+                                    ▶ Preview
+                                </button>
+                            </div>
                         </div>
 
                         <div className="settings-option">
                             <div><strong>Show online status</strong><span>When off, other users won't see you in their online users list.</span></div>
-                            <button type="button" role="switch" aria-checked={settings.showOnlineStatus} aria-label="Show online status" className={`settings-switch ${settings.showOnlineStatus ? "is-on" : ""}`} disabled={Boolean(savingKey)} onClick={() => updateSetting("showOnlineStatus", !settings.showOnlineStatus)}><span /></button>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={settings.showOnlineStatus}
+                                aria-label="Show online status"
+                                className={`settings-switch ${settings.showOnlineStatus ? "is-on" : ""}`}
+                                disabled={Boolean(savingKey)}
+                                onClick={() => updateSetting("showOnlineStatus", !settings.showOnlineStatus)}
+                            ><span /></button>
                         </div>
+
+                        <section className="settings-security-section" aria-labelledby="settings-security-title">
+                            <div className="settings-password-heading">
+                                <strong id="settings-security-title">Security</strong>
+                                <span>Manage your account password and sign-in security.</span>
+                            </div>
+                            <div className="settings-password-card">
+                                <div className="settings-password-card-copy">
+                                    <strong>Change password</strong>
+                                    <span>Update your account password. Use at least 8 characters.</span>
+                                </div>
+                                <button type="button" className="settings-password-open" onClick={() => setShowPasswordModal(true)} disabled={loading || Boolean(savingKey)}>
+                                    Change password <span aria-hidden="true">→</span>
+                                </button>
+                            </div>
+                        </section>
                     </div>
                 )}
                 {savingKey && <p className="settings-saving">Saving...</p>}
                 {error && <p className="profile-modal-error" role="alert">{error}</p>}
                 {notice && !error && <p className="settings-success" role="status">{notice}</p>}
             </section>
+            {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
         </div>
     );
 }

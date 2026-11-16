@@ -8,33 +8,10 @@ import IncomingCallOverlay from "../components/chat/calls/IncomingCallOverlay";
 import ConnectedCallOverlay from "../components/chat/calls/ConnectedCallOverlay";
 import VideoCall from "../components/chat/calls/VideoCall";
 import "../styles/chat.css";
+import { playNotificationSound } from "../utils/notificationSounds";
 
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
-function playMessageNotificationSound() {
-    try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const context = new AudioContextClass();
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(740, context.currentTime);
-        oscillator.frequency.setValueAtTime(560, context.currentTime + 0.10);
-        gain.gain.setValueAtTime(0.0001, context.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.12, context.currentTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.22);
-        oscillator.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start();
-        oscillator.stop(context.currentTime + 0.23);
-        oscillator.onended = () => context.close();
-    } catch (error) {
-        // Browsers may block audio until the user interacts with the page.
-        console.debug("Notification sound unavailable:", error);
-    }
-}
 
 function Chat() {
     const [selectedUser, setSelectedUser] = useState(null);
@@ -81,8 +58,9 @@ function Chat() {
 
             const isOutsideActiveChat = senderId !== String(selectedUser);
             const soundEnabled = localStorage.getItem("chatnova_notification_sound") !== "false";
+            const selectedSound = localStorage.getItem("chatnova_notification_sound_type") || "default";
             if (soundEnabled && (isOutsideActiveChat || document.hidden)) {
-                playMessageNotificationSound();
+                playNotificationSound(selectedSound);
             }
 
             setLastMessages((prev) => ({
