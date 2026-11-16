@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const cloudinary = require("../config/cloudinary");
+const bcrypt = require("bcryptjs");
 
 const getUser = async (req, res) => {
     try {
@@ -133,6 +134,7 @@ const uploadProfilePicture = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please choose an image to upload" });
         }
 
+        
         const buffer = req.file.buffer;
         const isJpeg = buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
         const isPng = buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
@@ -203,6 +205,14 @@ const updateMySettings = async (req, res) => {
             updates["preferences.notificationSound"] = body.notificationSound;
         }
 
+        if (Object.prototype.hasOwnProperty.call(body, "notificationSoundType")) {
+            const allowedSounds = ["default", "softPop", "classic", "minimal", "digital"];
+            if (typeof body.notificationSoundType !== "string" || !allowedSounds.includes(body.notificationSoundType.trim())) {
+                return res.status(400).json({ success: false, message: "Invalid notification sound selection" });
+            }
+            updates["preferences.notificationSoundType"] = body.notificationSoundType.trim();
+        }
+
         if (Object.prototype.hasOwnProperty.call(body, "showOnlineStatus")) {
             if (typeof body.showOnlineStatus !== "boolean") {
                 return res.status(400).json({ success: false, message: "Show online status must be a boolean" });
@@ -234,6 +244,55 @@ const updateMySettings = async (req, res) => {
     } catch (error) {
         console.error("Update settings error:", error);
         return res.status(500).json({ success: false, message: "Failed to update settings" });
+    }
+};
+
+const changeMyPassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body || {};
+
+        if (typeof currentPassword !== "string" || typeof newPassword !== "string" || typeof confirmPassword !== "string") {
+            return res.status(400).json({ success: false, message: "All password fields are required and must be text" });
+        }
+
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ success: false, message: "Please complete all password fields" });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ success: false, message: "New password must be at least 8 characters long" });
+        }
+
+        // bcrypt only considers the first 72 UTF-8 bytes of a password.
+        if (Buffer.byteLength(newPassword, "utf8") > 72) {
+            return res.status(400).json({ success: false, message: "New password must not exceed 72 bytes" });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ success: false, message: "New password and confirmation do not match" });
+        }
+
+        if (currentPassword === newPassword) {
+            return res.status(400).json({ success: false, message: "New password must be different from your current password" });
+        }
+
+        const user = await User.findById(req.user.userId).select("+password");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const currentPasswordMatches = await bcrypt.compare(currentPassword, user.password);
+        if (!currentPasswordMatches) {
+            return res.status(401).json({ success: false, message: "Current password is incorrect" });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 12);
+        await user.save();
+
+        return res.status(200).json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+        console.error("Change password error:", error);
+        return res.status(500).json({ success: false, message: "Unable to change password right now" });
     }
 };
 
@@ -349,6 +408,7 @@ module.exports = {
     updateMe,
     uploadProfilePicture,
     updateMySettings,
+    changeMyPassword,
     createUser,
     searchUsers
 };

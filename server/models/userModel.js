@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
         preferences: {
             theme: { type: String, enum: ["light", "dark"], default: "light" },
             notificationSound: { type: Boolean, default: true },
+            notificationSoundType: { type: String, enum: ["default", "softPop", "classic", "minimal", "digital"], default: "default" },
             showOnlineStatus: { type: Boolean, default: true }
         }
     },

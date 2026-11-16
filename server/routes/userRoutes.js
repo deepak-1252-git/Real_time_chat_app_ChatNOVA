@@ -6,6 +6,7 @@ const {
     updateMe,
     uploadProfilePicture,
     updateMySettings,
+    changeMyPassword,
     searchUsers
 } = require("../controllers/userController");
 
@@ -15,6 +16,7 @@ const uploadProfileImage = require("../middleware/profileUpload");
 router.get("/", protect, getUser);
 router.get("/me", protect, getMe);
 router.put("/me", protect, updateMe);
+router.put("/me/password", protect, changeMyPassword);
 router.post("/me/avatar", protect, (req, res, next) => {
     uploadProfileImage.single("avatar")(req, res, (error) => {
         if (error) {
