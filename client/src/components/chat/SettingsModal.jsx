@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MoonIcon, SunDimIcon } from 'lucide-react';
 import { NOTIFICATION_SOUND_OPTIONS, playNotificationSound } from "../../utils/notificationSounds";
 import ChangePasswordModal from './ChangePasswordModal';
+import DeleteAccountModal from "./DeleteAccountModal";
 
 const DEFAULT_SETTINGS = {
     theme: "light",
@@ -23,6 +24,7 @@ function SettingsModal({ onClose }) {
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -194,11 +196,14 @@ function SettingsModal({ onClose }) {
                             <div className="settings-password-card">
                                 <div className="settings-password-card-copy">
                                     <strong>Change password</strong>
-                                    <span>Update your account password. Use at least 8 characters.</span>
                                 </div>
-                                <button type="button" className="settings-password-open" onClick={() => setShowPasswordModal(true)} disabled={loading || Boolean(savingKey)}>
-                                    Change password <span aria-hidden="true">→</span>
-                                </button>
+                                <button type="button" className="settings-password-open" onClick={() => setShowPasswordModal(true)} disabled={loading || Boolean(savingKey)}>Change password</button>
+                            </div>
+                            <div className="settings-password-card">
+                                <div className="settings-password-card-copy">
+                                    <strong>Delete account</strong>
+                                </div>
+                                <button type="button" className="settings-delete-open" onClick={() => setShowDeleteModal(true)} disabled={loading || Boolean(savingKey)}>Delete account</button>
                             </div>
                         </section>
                     </div>
@@ -208,6 +213,7 @@ function SettingsModal({ onClose }) {
                 {notice && !error && <p className="settings-success" role="status">{notice}</p>}
             </section>
             {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
+            {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
         </div>
     );
 }

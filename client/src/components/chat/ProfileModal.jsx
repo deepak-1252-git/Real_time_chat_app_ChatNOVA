@@ -177,7 +177,7 @@ function ProfileModal({ onClose, user: fallbackUser, onProfileUpdated }) {
                             </label>
                             {avatarFile && (
                                 <div className="profile-avatar-actions">
-                                    <span>{avatarFile.name}</span>
+                                    {/* <span>{avatarFile.name}</span> */}
                                     <button type="button" onClick={handleAvatarUpload} disabled={uploadingAvatar}>{uploadingAvatar ? "Uploading..." : "Upload picture"}</button>
                                     <button type="button" onClick={() => { setAvatarFile(null); setAvatarPreview(""); setError(""); }} disabled={uploadingAvatar}>Cancel</button>
                                 </div>

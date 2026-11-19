@@ -596,6 +596,24 @@ const sendOnlineUsers = async () => {
 
 // Expose the online-list refresh function to authenticated controllers.
 app.locals.refreshOnlineUsers = sendOnlineUsers;
+app.locals.disconnectUserSockets = async (userId) => {
+    const userKey = String(userId);
+    const socketIds = onlineUsers.get(userKey);
+
+    if (socketIds) {
+        // Remove the map entry first so disconnect handlers cannot mark a deleted user offline.
+        onlineUsers.delete(userKey);
+        for (const socketId of socketIds) {
+            const userSocket = io.sockets.sockets.get(socketId);
+            if (userSocket) {
+                userSocket.userId = null;
+                userSocket.disconnect(true);
+            }
+        }
+    }
+
+    await sendOnlineUsers();
+};
 
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)

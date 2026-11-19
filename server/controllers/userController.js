@@ -134,7 +134,7 @@ const uploadProfilePicture = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please choose an image to upload" });
         }
 
-        
+
         const buffer = req.file.buffer;
         const isJpeg = buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
         const isPng = buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
@@ -296,6 +296,51 @@ const changeMyPassword = async (req, res) => {
     }
 };
 
+const deleteMyAccount = async (req, res) => {
+    try {
+        const { password } = req.body || {};
+        if (typeof password !== "string" || !password.trim()) {
+            return res.status(400).json({ success: false, message: "Please enter your current password to delete the account" });
+        }
+
+        const user = await User.findById(req.user.userId).select("+password");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User account was not found" });
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.password);
+        if (!passwordMatches) {
+            return res.status(401).json({ success: false, message: "Password is incorrect. Account was not deleted." });
+        }
+
+        // Remove chat history involving this account before removing the user record.
+        const Message = require("../models/Message");
+        await Message.deleteMany({
+            $or: [
+                { sender: user._id },
+                { receiver: user._id }
+            ]
+        });
+
+        await User.deleteOne({ _id: user._id });
+
+        // Disconnect every active socket for this user and refresh everyone's online list.
+        if (typeof req.app.locals.disconnectUserSockets === "function") {
+            await req.app.locals.disconnectUserSockets(String(user._id));
+        } else if (typeof req.app.locals.refreshOnlineUsers === "function") {
+            await req.app.locals.refreshOnlineUsers();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Your account and chat history have been deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete account error:", error);
+        return res.status(500).json({ success: false, message: "Unable to delete the account right now. Please try again." });
+    }
+};
+
 const createUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
@@ -409,6 +454,7 @@ module.exports = {
     uploadProfilePicture,
     updateMySettings,
     changeMyPassword,
+    deleteMyAccount,
     createUser,
     searchUsers
 };
