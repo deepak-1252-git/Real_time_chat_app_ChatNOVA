@@ -16,7 +16,11 @@ function useChatSocket(
 
         onTyping,
         onStopTyping,
-        onMessagesRead
+        onMessagesRead,
+        onConnectionRequestReceived,
+        onConnectionAccepted,
+        onConnectionRemoved,
+        onActionRejected
     } = {}
 ) {
 
@@ -36,7 +40,11 @@ function useChatSocket(
 
         onTyping,
         onStopTyping,
-        onMessagesRead
+        onMessagesRead,
+        onConnectionRequestReceived,
+        onConnectionAccepted,
+        onConnectionRemoved,
+        onActionRejected
     });
 
     useEffect(() => {
@@ -47,14 +55,22 @@ function useChatSocket(
             onMessageSent,
             onTyping,
             onStopTyping,
-            onMessagesRead
+            onMessagesRead,
+            onConnectionRequestReceived,
+            onConnectionAccepted,
+            onConnectionRemoved,
+            onActionRejected
         };
     }, [
         onReceiveMessage,
         onMessageSent,
         onTyping,
         onStopTyping,
-        onMessagesRead
+        onMessagesRead,
+        onConnectionRequestReceived,
+        onConnectionAccepted,
+        onConnectionRemoved,
+        onActionRejected
     ]);
 
     useEffect(() => {
@@ -68,11 +84,6 @@ function useChatSocket(
             console.log(
                 "Socket connected:",
                 socket.id
-            );
-
-            socket.emit(
-                "userConnected",
-                userId
             );
 
             socket.emit("activeChat", {
@@ -162,6 +173,13 @@ function useChatSocket(
             callbacksRef.current.onMessagesRead?.({ readerId });
         };
 
+        const handleConnectionRequestReceived = (data) => callbacksRef.current.onConnectionRequestReceived?.(data);
+        const handleConnectionAccepted = (data) => callbacksRef.current.onConnectionAccepted?.(data);
+        const handleConnectionRemoved = (data) => callbacksRef.current.onConnectionRemoved?.(data);
+        const handleActionRejected = (data) => callbacksRef.current.onActionRejected?.(data);
+
+        // Refresh the JWT on each authenticated session (including reconnects).
+        socket.auth = { token: localStorage.getItem("token") };
         socket.on("connect", handleConnect);
 
         socket.on("disconnect", handleDisconnect);
@@ -188,9 +206,14 @@ function useChatSocket(
         socket.on("user-typing", handleUserTyping);
         socket.on("user-stop-typing", handleUserStopTyping);
         socket.on("messages-read", handleMessagesRead);
+        socket.on("connectionRequestReceived", handleConnectionRequestReceived);
+        socket.on("connectionAccepted", handleConnectionAccepted);
+        socket.on("connectionRemoved", handleConnectionRemoved);
+        socket.on("actionRejected", handleActionRejected);
 
-        // Socket already connected hai
-        if (socket.connected) { handleConnect(); }
+        // Connect only after the current login token has been attached.
+        if (!socket.connected) socket.connect();
+        else handleConnect();
 
         return () => {
 
@@ -218,6 +241,12 @@ function useChatSocket(
             socket.off("user-typing", handleUserTyping);
             socket.off("user-stop-typing", handleUserStopTyping);
             socket.off("messages-read", handleMessagesRead);
+            socket.off("connectionRequestReceived", handleConnectionRequestReceived);
+            socket.off("connectionAccepted", handleConnectionAccepted);
+            socket.off("connectionRemoved", handleConnectionRemoved);
+            socket.off("actionRejected", handleActionRejected);
+            // This hook owns the authenticated socket lifecycle.
+            socket.disconnect();
 
         };
 
@@ -296,7 +325,7 @@ function useChatSocket(
                 targetUserId,
                 answer
             });
-            
+
         }, []);
 
     const endCall = (targetUserId) => {

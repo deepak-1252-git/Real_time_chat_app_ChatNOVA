@@ -1,14 +1,14 @@
 import Avatar from "./Avatar";
 
 function UserItem({
-    username,
-    profilePicture,
+    user,
     isOnline,
     isSelected,
     lastMessage,
     unreadCount,
     onClick,
-    isTyping
+    isTyping,
+    actions = []
 }) {
 
     const formatTime = (date) => {
@@ -24,63 +24,35 @@ function UserItem({
     };
 
     return (
-        <div
-            className={`user-item ${isSelected ? "selected" : ""
-                }`}
-            onClick={onClick}
-        >
-
-            <Avatar
-                src={profilePicture}
-                name={username}
-                className="user-avatar"
-                size={45}
-            />
-
+        <div className={`user-item ${isSelected ? "selected" : ""} ${onClick ? "user-item-clickable" : ""}`} onClick={onClick}>
+            <Avatar src={user.profilePicture} name={user.username} className="user-avatar" size={45} />
             <div className="user-info">
-
                 <div className="user-top-row">
-
-                    <h4>
-                        {username}
-                    </h4>
-
+                    <h4>{user.username}</h4>
                     <span className="last-time">
-                        {formatTime(
-                            lastMessage?.createdAt
-                        )}
+                        {formatTime(lastMessage?.createdAt)}
                     </span>
-
                 </div>
-
                 <div className="user-bottom-row">
-
                     <span className="last-message">
-
                         {isTyping ?
-                            (
-                                <span className="typing-indicator" >
-                                    typing...
-                                </span>
-                            ) :
-                            /* {lastMessage?.message || (isOnline ? "Online" : "Offline")} */
-                            lastMessage?.message || (isOnline ? "Offline" : "Online")
-                        }
-
+                            <span className="typing-indicator">typing...</span>
+                            : lastMessage?.message || (isOnline ? "Online" : "Offline")}
                     </span>
-
-                    {unreadCount > 0 && (
-                        <span className="unread-badge">
-                            {unreadCount > 99
-                                ? "99+"
-                                : unreadCount}
-                        </span>
-                    )}
-
+                    {unreadCount > 0 && <span className="unread-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
                 </div>
-
+                {actions.length > 0 && <div className="connection-actions">
+                    {actions.map((action, index) =>
+                        <button
+                            key={`${action.label}-${index}`}
+                            type="button" title={action.title}
+                            disabled={action.disabled}
+                            className={`connection-action ${action.kind || "subtle"}`}
+                            onClick={(event) => { event.stopPropagation(); action.onClick?.(); }}>
+                            {action.label}
+                        </button>)}
+                </div>}
             </div>
-
         </div>
     );
 }

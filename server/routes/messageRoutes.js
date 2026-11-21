@@ -1,8 +1,19 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const Message = require("../models/Message");
+const Connection = require("../models/Connection");
 const protect = require("../middleware/authMiddleware");
 const router = express.Router();
+
+const requireAcceptedConnection = async (currentUserId, otherUserId, res) => {
+    const pairKey = Connection.makePairKey(currentUserId, otherUserId);
+    const connected = await Connection.exists({ pairKey, status: "accepted" });
+    if (!connected) {
+        res.status(403).json({ success: false, message: "You must be connected to access this chat" });
+        return false;
+    }
+    return true;
+};
 
 router.get("/unread", protect, async (req, res) => {
 
@@ -10,10 +21,18 @@ router.get("/unread", protect, async (req, res) => {
 
         const currentUserId = req.user.userId;
 
+        const acceptedConnections = await Connection.find({
+            status: "accepted",
+            $or: [{ requester: currentUserId }, { recipient: currentUserId }]
+        }).select("requester recipient").lean();
+        const connectedIds = acceptedConnections.map((item) =>
+            String(item.requester) === String(currentUserId) ? item.recipient : item.requester
+        );
         const unreadMessages = await Message.aggregate([
             {
                 $match: {
                     receiver: new mongoose.Types.ObjectId(currentUserId),
+                    sender: { $in: connectedIds },
                     isRead: false
                 }
             },
@@ -70,6 +89,7 @@ router.put("/read/:userId", protect, async (req, res) => {
                 message: "Invalid user ID"
             });
         }
+        if (!(await requireAcceptedConnection(currentUserId, userId, res))) return;
 
         await Message.updateMany(
             {
@@ -119,6 +139,7 @@ router.get("/:userId", protect, async (req, res) => {
         }
 
         const currentUserId = req.user.userId;
+        if (!(await requireAcceptedConnection(currentUserId, userId, res))) return;
 
         const messages = await Message.find({
             $or: [

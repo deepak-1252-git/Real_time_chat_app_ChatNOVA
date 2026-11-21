@@ -1,35 +1,43 @@
 const User = require("../models/userModel");
 const cloudinary = require("../config/cloudinary");
 const bcrypt = require("bcryptjs");
+const Connection = require("../models/Connection");
+
+const getRelationMap = async (currentUserId, users) => {
+    const ids = users.map((user) => user._id);
+    if (!ids.length) return new Map();
+    const records = await Connection.find({
+        pairKey: { $in: ids.map((id) => Connection.makePairKey(currentUserId, id)) }
+    }).select("requester recipient status pairKey").lean();
+    return new Map(records.map((record) => {
+        let relation = "none";
+        if (record.status === "accepted") relation = "connected";
+        else relation = String(record.requester) === String(currentUserId) ? "request_sent" : "request_received";
+        return [record.pairKey, relation];
+    }));
+};
+
+const formatUserListItem = (user, relation = "none") => ({
+    userId: String(user._id),
+    username: user.username,
+    profilePicture: user.profilePicture || "",
+    status: user.preferences?.showOnlineStatus === false ? "offline" : (user.status || "offline"),
+    relation
+});
 
 const getUser = async (req, res) => {
     try {
-
         const currentUserId = req.user.userId;
-
-        const users = await User.find({
-            _id: { $ne: currentUserId }
-        })
+        const users = await User.find({ _id: { $ne: currentUserId } })
             .select("_id username profilePicture status preferences.showOnlineStatus");
-
-        res.json({
+        const relationMap = await getRelationMap(currentUserId, users);
+        return res.json({
             success: true,
-            users: users.map((user) => ({
-                _id: user._id,
-                username: user.username,
-                profilePicture: user.profilePicture || "",
-                status: user.preferences?.showOnlineStatus === false ? "offline" : user.status
-            }))
+            users: users.map((user) => formatUserListItem(user, relationMap.get(Connection.makePairKey(currentUserId, user._id)) || "none"))
         });
-
     } catch (error) {
-
         console.error("Get users error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Failed to fetch users"
-        });
+        return res.status(500).json({ success: false, message: "Failed to fetch users" });
     }
 };
 
@@ -313,6 +321,9 @@ const deleteMyAccount = async (req, res) => {
             return res.status(401).json({ success: false, message: "Password is incorrect. Account was not deleted." });
         }
 
+        // Remove all connection requests and accepted connections involving this account.
+        await Connection.deleteMany({ $or: [{ requester: user._id }, { recipient: user._id }] });
+
         // Remove chat history involving this account before removing the user record.
         const Message = require("../models/Message");
         await Message.deleteMany({
@@ -367,6 +378,7 @@ const createUser = async (req, res) => {
         }
 
         const bcrypt = require("bcryptjs");
+const Connection = require("../models/Connection");
 
         const hashedPassword = await bcrypt.hash(
             password,
@@ -404,49 +416,25 @@ const createUser = async (req, res) => {
 
 const searchUsers = async (req, res) => {
     try {
-
-        const { q } = req.query;
-
-        if (!q || !q.trim()) {
-            return res.json({
-                success: true,
-                users: []
-            });
-        }
-
+        const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 80) : "";
+        if (!q) return res.json({ success: true, users: [] });
         const currentUserId = req.user.userId;
-
+        const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const users = await User.find({
             _id: { $ne: currentUserId },
-            username: {
-                $regex: q.trim(),
-                $options: "i"
-            }
-        })
-            .select("_id username profilePicture status preferences.showOnlineStatus")
-            .limit(20);
-
-        res.json({
+            username: { $regex: escaped, $options: "i" }
+        }).select("_id username profilePicture status preferences.showOnlineStatus").limit(20);
+        const relationMap = await getRelationMap(currentUserId, users);
+        return res.json({
             success: true,
-            users: users.map((user) => ({
-                _id: user._id,
-                username: user.username,
-                profilePicture: user.profilePicture || "",
-                status: user.preferences?.showOnlineStatus === false ? "offline" : user.status
-            }))
+            users: users.map((user) => formatUserListItem(user, relationMap.get(Connection.makePairKey(currentUserId, user._id)) || "none"))
         });
-
     } catch (error) {
-
         console.error("User search error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: "Failed to search users"
-        });
-
+        return res.status(500).json({ success: false, message: "Failed to search users" });
     }
 };
+
 module.exports = {
     getUser,
     getMe,

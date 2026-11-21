@@ -224,6 +224,8 @@ body {
     padding: 10px 15px;
 
     overflow-y: auto;
+    scrollbar-width: none;
+
 }
 
 .user-item {
@@ -1877,6 +1879,106 @@ body {
     }
 }
 
+
+/* Connection tabs and discovery actions */
+.connection-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 10px 10px 6px;
+    border-bottom: 1px solid rgba(120, 130, 150, 0.16);
+}
+
+.connection-tab {
+    position: relative;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 3px;
+    background: transparent;
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.connection-tab.active {
+    background: #e8f0fe;
+    color: #2457b2;
+}
+
+.connection-tab.active 
+.request-tab-badge{
+    background: #20be84;
+}
+
+.request-tab-badge {
+    display: inline-flex;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    margin-top: -15px;
+    margin-left: 54px;
+    border-radius: 20px;
+    background: #e5484d;
+    color: #fff;
+    font-size: 10px;
+}
+
+.connection-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 7px;
+}
+
+.connection-action {
+    border: 1px solid #d7deea;
+    border-radius: 7px;
+    padding: 5px 9px;
+    background: #fff;
+    color: #344054;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.connection-action.primary {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #fff;
+}
+
+.connection-action:disabled {
+    cursor: default;
+    opacity: .75;
+}
+
+.user-item-clickable {
+    cursor: pointer;
+}
+
+.connection-section-title {
+    padding: 8px 5px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.connection-loading,
+.connection-error {
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 12px;
+}
+
+.connection-error {
+    color: #dc2626;
+}
+
 /* ChatNOVA dark theme */
 body[data-chatnova-theme="dark"] {
     background: #121315;
@@ -2058,4 +2160,29 @@ body[data-chatnova-theme="dark"] .delete-account-warning {
     background: #351b24;
     border-color: #7f1d1d;
     color: #fecaca;
+}
+
+body[data-chatnova-theme="dark"] .connection-tabs {
+    border-color: rgba(255, 255, 255, .12);
+}
+
+body[data-chatnova-theme="dark"] .connection-tab.active {
+    background: #243653;
+    color: #c7dcff;
+}
+
+body[data-chatnova-theme="dark"] .connection-action {
+    border-color: #475569;
+    background: #263244;
+    color: #e2e8f0;
+}
+
+body[data-chatnova-theme="dark"] .connection-action.primary {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #fff;
+}
+
+body[data-chatnova-theme="dark"] .connection-section-title {
+    color: #a7b2c4;
 }

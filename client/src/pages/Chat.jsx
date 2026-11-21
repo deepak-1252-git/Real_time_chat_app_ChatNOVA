@@ -1,5 +1,7 @@
 import useChatSocket from "../hooks/useChatSocket";
 import useWebRTC from "../hooks/useWebRTC";
+import useConnections from "../hooks/useConnections";
+import useDiscoverUsers from "../hooks/useDiscoverUsers";
 
 import Sidebar from "../components/chat/Sidebar";
 import ChatWindow from "../components/chat/ChatWindow";
@@ -15,14 +17,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 function Chat() {
     const [selectedUser, setSelectedUser] = useState(null);
-    const [searchText, setSearchText] = useState("");
-    const [searchResults, setSearchResults] = useState([]);
+    const [activeTab, setActiveTab] = useState("online");
+    const [actionError, setActionError] = useState("");
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [lastMessages, setLastMessages] = useState({});
     const [unreadCounts, setUnreadCounts] = useState({});
     const [showChat, setShowChat] = useState(false);
     const [typingUsers, setTypingUsers] = useState({});
+    const [discoverQuery, setDiscoverQuery] = useState("");
 
     const messagesEndRef = useRef(null);
     const remoteAudioRef = useRef(null);
@@ -32,6 +35,12 @@ function Chat() {
     // ---------------------------------------------------------
     const storedUser = localStorage.getItem("user");
     const user = storedUser ? JSON.parse(storedUser) : null;
+
+    const handleConnectionRequestNotification = useCallback(() => {
+        const enabled = localStorage.getItem("chatnova_notification_sound") !== "false";
+        const selectedSound = localStorage.getItem("chatnova_notification_sound_type") || "default";
+        if (enabled) playNotificationSound(selectedSound);
+    }, []);
 
     useEffect(() => {
         const savedTheme = localStorage.getItem("chatnova_theme") || "light";
@@ -271,6 +280,25 @@ function Chat() {
         onCallCleanup: handleMediaCleanup
     });
 
+    const handleConnectionRemoved = useCallback((payload) => {
+        if (selectedUser && String(payload?.userId) === String(selectedUser)) {
+            if (callStatus !== "idle") endCall(payload.userId);
+            setActiveChat(null);
+            setSelectedUser(null);
+            setMessages([]);
+            setMessage("");
+            setShowChat(false);
+        }
+    }, [selectedUser, callStatus]);
+    const { connections, incoming, outgoing, pendingCount, loading: connectionsLoading, error: connectionsError, request: sendConnectionRequest, accept: acceptConnection, reject: rejectConnection, remove: removeConnection } = useConnections({
+        onRequestReceived: handleConnectionRequestNotification,
+        onConnectionRemoved: handleConnectionRemoved
+    });
+    const { users: discoverUsers, loading: discoverLoading, hasMore: discoverHasMore, error: discoverError, loadMore: loadMoreDiscover, refresh: refreshDiscover, updateRelation } = useDiscoverUsers(discoverQuery);
+    useEffect(() => {
+        if (activeTab === "discover") refreshDiscover();
+    }, [connections, incoming, outgoing]);
+
     // --------------------------------------------------------------------
     // 
     // --------------------------------------------------------------------
@@ -306,85 +334,18 @@ function Chat() {
     // 
     // --------------------------------------------------------------------
 
-    const selectedUserData = onlineUsers.find(
-        (user) =>
-            String(user.userId) ===
-            String(selectedUser));
+    const selectedUserData = connections.find(
+        (connection) => String(connection.userId) === String(selectedUser)
+    ) || onlineUsers.find((onlineUser) => String(onlineUser.userId) === String(selectedUser));
 
     const selectedUsername = selectedUserData?.username || selectedUser;
     const selectedUserPicture = selectedUserData?.profilePicture || "";
 
-    const callerUserData = onlineUsers.find(
-        (onlineUser) =>
-            String(onlineUser.userId) ===
-            String(caller)
-    );
+    const callerUserData = connections.find((connection) => String(connection.userId) === String(caller)) || onlineUsers.find((onlineUser) => String(onlineUser.userId) === String(caller));
 
     const callerUsername = callerUserData?.username || caller;
     const callerUserPicture = callerUserData?.profilePicture || "";
 
-
-    useEffect(() => {
-
-        const searchUsers = async () => {
-
-            const query = searchText.trim();
-
-            // Search empty hai → backend call ki zarurat nahi
-            if (!query) {
-                setSearchResults([]);
-                return;
-            }
-
-            try {
-
-                const token = localStorage.getItem("token");
-
-                const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/api/users/search?q=${encodeURIComponent(query)}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-
-                    setSearchResults(data.users);
-
-                } else {
-
-                    setSearchResults([]);
-
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "User search failed:",
-                    error
-                );
-
-                setSearchResults([]);
-
-            }
-
-        };
-
-        const timer = setTimeout(
-            searchUsers,
-            300
-        );
-
-        return () => {
-            clearTimeout(timer);
-        };
-
-    }, [searchText]);
 
     const sendMessage = () => {
 
@@ -857,14 +818,46 @@ function Chat() {
         }
     };
 
-    const displayUsers = (
-        searchText.trim()
-            ? searchResults
-            : onlineUsers
-    ).filter(
-        (onlineUser) =>
-            String(onlineUser.userId) !== String(user?.id)
-    );
+    const onlineIds = new Set(onlineUsers.map((item) => String(item.userId)));
+    const onlineConnections = connections.filter((item) => onlineIds.has(String(item.userId)));
+    const sidebarUsers = activeTab === "online" ? onlineConnections
+        : activeTab === "meet" ? connections
+        : activeTab === "discover" ? discoverUsers
+        : { incoming, outgoing };
+
+    const handleConnectionAction = async (action, item) => {
+        setActionError("");
+        const userId = String(item.userId);
+        const connectionId = item.connectionId || incoming.find((entry) => String(entry.userId) === userId)?.connectionId;
+        const previousRelation = item.relation;
+        try {
+            if (action === "request") {
+                updateRelation(userId, "request_sent");
+                try { await sendConnectionRequest(userId); }
+                catch (error) { updateRelation(userId, previousRelation || "none"); throw error; }
+                refreshDiscover();
+            } else if (action === "accept") {
+                await acceptConnection(connectionId);
+                refreshDiscover();
+            } else if (action === "reject") {
+                await rejectConnection(connectionId);
+                refreshDiscover();
+            } else if (action === "remove") {
+                await removeConnection(connectionId);
+                if (selectedUser && String(selectedUser) === userId) {
+                    if (callStatus !== "idle") endCall(selectedUser);
+                    setActiveChat(null);
+                    setSelectedUser(null);
+                    setMessages([]);
+                    setMessage("");
+                    setShowChat(false);
+                }
+                refreshDiscover();
+            }
+        } catch (error) {
+            setActionError(error.message || "Something went wrong");
+        }
+    };
 
     const selectUser = async (userId) => {
 
@@ -921,14 +914,21 @@ function Chat() {
 
             <Sidebar
                 user={user}
-                displayUsers={displayUsers}
+                activeTab={activeTab}
+                setActiveTab={(tab) => { setActiveTab(tab); setActionError(""); }}
+                users={sidebarUsers}
                 selectedUser={selectedUser}
                 onSelectUser={selectUser}
-                searchText={searchText}
-                setSearchText={setSearchText}
+                searchText={discoverQuery}
+                setSearchText={setDiscoverQuery}
                 lastMessages={lastMessages}
                 unreadCounts={unreadCounts}
                 typingUsers={typingUsers}
+                onAction={handleConnectionAction}
+                onScrollEnd={() => { if (activeTab === "discover" && discoverHasMore) loadMoreDiscover(); }}
+                loading={activeTab === "discover" ? discoverLoading : connectionsLoading}
+                error={actionError || (activeTab === "discover" ? discoverError : connectionsError)}
+                pendingCount={pendingCount}
             />
 
             <ChatWindow

@@ -10,10 +10,12 @@ const {
     deleteMyAccount,
     searchUsers
 } = require("../controllers/userController");
+const { discoverUsers } = require("../controllers/connectionController");
 
 const protect = require("../middleware/authMiddleware");
 const uploadProfileImage = require("../middleware/profileUpload");
 
+router.get("/discover", protect, discoverUsers);
 router.get("/", protect, getUser);
 router.get("/me", protect, getMe);
 router.put("/me", protect, updateMe);
