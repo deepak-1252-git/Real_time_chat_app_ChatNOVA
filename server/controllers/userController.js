@@ -321,8 +321,10 @@ const deleteMyAccount = async (req, res) => {
             return res.status(401).json({ success: false, message: "Password is incorrect. Account was not deleted." });
         }
 
-        // Remove all connection requests and accepted connections involving this account.
-        await Connection.deleteMany({ $or: [{ requester: user._id }, { recipient: user._id }] });
+        // Keep a snapshot so every counterpart can be notified after the account is removed.
+        const relatedConnections = await Connection.find({
+            $or: [{ requester: user._id }, { recipient: user._id }]
+        }).select("_id requester recipient status").lean();
 
         // Remove chat history involving this account before removing the user record.
         const Message = require("../models/Message");
@@ -333,7 +335,30 @@ const deleteMyAccount = async (req, res) => {
             ]
         });
 
+        // Delete pending requests and accepted connections before deleting the user.
+        await Connection.deleteMany({ $or: [{ requester: user._id }, { recipient: user._id }] });
         await User.deleteOne({ _id: user._id });
+
+        // Notify every affected user so Meet/Requests refresh and any open chat closes.
+        const io = req.app.locals.io;
+        const deletedUserId = String(user._id);
+        if (io) {
+            const notifiedUserIds = new Set();
+            for (const connection of relatedConnections) {
+                const otherUserId = String(connection.requester) === deletedUserId
+                    ? String(connection.recipient)
+                    : String(connection.requester);
+                if (!otherUserId || notifiedUserIds.has(otherUserId)) continue;
+                notifiedUserIds.add(otherUserId);
+                io.to(`user:${otherUserId}`).emit("connectionRemoved", {
+                    connectionId: String(connection._id),
+                    userId: deletedUserId,
+                    reason: "account_deleted"
+                });
+                // Ensure an ongoing call is torn down even if the peer has no chat selected.
+                io.to(`user:${otherUserId}`).emit("callEnded", { reason: "account_deleted", userId: deletedUserId });
+            }
+        }
 
         // Disconnect every active socket for this user and refresh everyone's online list.
         if (typeof req.app.locals.disconnectUserSockets === "function") {
@@ -378,7 +403,7 @@ const createUser = async (req, res) => {
         }
 
         const bcrypt = require("bcryptjs");
-const Connection = require("../models/Connection");
+        const Connection = require("../models/Connection");
 
         const hashedPassword = await bcrypt.hash(
             password,

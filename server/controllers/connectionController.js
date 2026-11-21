@@ -62,48 +62,126 @@ const sendRequest = async (req, res) => {
     try {
         const requesterId = String(req.user.userId);
         const recipientId = String(req.params.userId);
-        if (!isValidId(recipientId)) return res.status(400).json({ success: false, message: "Invalid user ID" });
-        if (requesterId === recipientId) return res.status(400).json({ success: false, message: "You cannot connect with yourself" });
+
+        if (!isValidId(recipientId)) {
+            return res.status(400).json({ success: false, message: "Invalid user ID" });
+        }
+        if (requesterId === recipientId) {
+            return res.status(400).json({ success: false, message: "You cannot connect with yourself" });
+        }
+
         const recipient = await User.findById(recipientId).select("_id");
-        if (!recipient) return res.status(404).json({ success: false, message: "User not found" });
+        if (!recipient) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
 
         const pairKey = Connection.makePairKey(requesterId, recipientId);
-        const existing = await Connection.findOne({ pairKey });
-        if (existing?.status === "accepted") return res.status(409).json({ success: false, message: "You are already connected" });
-        if (existing?.status === "pending") {
-            if (String(existing.requester) === recipientId) {
-                existing.status = "accepted";
-                await existing.save();
-                const payload = { connectionId: String(existing._id), userId: requesterId, acceptedBy: requesterId };
+        let existing = await Connection.findOne({ pairKey }).lean();
+
+        if (existing?.status === "accepted") {
+            return res.status(409).json({ success: false, message: "You are already connected" });
+        }
+ 
+        if (existing?.status === "pending" && String(existing.requester) === recipientId) {
+            const accepted = await Connection.findOneAndUpdate(
+                { _id: existing._id, requester: recipientId, recipient: requesterId, status: "pending" },
+                { $set: { status: "accepted" } },
+                { new: true }
+            );
+
+            if (accepted) {
+                const payload = { connectionId: String(accepted._id), userId: requesterId, acceptedBy: requesterId };
                 emitToUser(req, requesterId, "connectionAccepted", payload);
                 emitToUser(req, recipientId, "connectionAccepted", { ...payload, userId: recipientId });
                 await refreshPresence(req);
-                return res.json({ success: true, message: "Connection request accepted", connection: { id: String(existing._id), status: "accepted" }, autoAccepted: true });
+                return res.json({
+                    success: true,
+                    message: "Connection request accepted",
+                    connection: { id: String(accepted._id), status: "accepted" },
+                    autoAccepted: true
+                });
             }
+
+            // Another request action won the race. Re-read before deciding the result.
+            existing = await Connection.findOne({ pairKey }).lean();
+            if (existing?.status === "accepted") {
+                return res.status(409).json({ success: false, message: "You are already connected" });
+            }
+            if (existing) {
+                return res.status(409).json({ success: false, message: "A connection request already exists" });
+            }
+        }
+
+        if (existing?.status === "pending") {
             return res.status(409).json({ success: false, message: "Connection request already sent" });
         }
 
-        const pendingCount = await Connection.countDocuments({ requester: requesterId, status: "pending" });
-        if (pendingCount >= 50) return res.status(429).json({ success: false, message: "You have reached the limit of 50 pending requests" });
+        const pendingCount = await Connection.countDocuments({
+            requester: requesterId,
+            status: "pending"
+        });
+        if (pendingCount >= 50) {
+            return res.status(429).json({ success: false, message: "You have reached the limit of 50 pending requests" });
+        }
 
         try {
-            const connection = await Connection.create({ requester: requesterId, recipient: recipientId, pairKey, status: "pending" });
-            emitToUser(req, recipientId, "connectionRequestReceived", { connectionId: String(connection._id), requesterId });
-            return res.status(201).json({ success: true, message: "Connection request sent", connection: { id: String(connection._id), status: connection.status } });
+            const connection = await Connection.create({
+                requester: requesterId,
+                recipient: recipientId,
+                pairKey,
+                status: "pending"
+            });
+
+            emitToUser(req, recipientId, "connectionRequestReceived", {
+                connectionId: String(connection._id),
+                requesterId
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: "Connection request sent",
+                connection: { id: String(connection._id), status: connection.status }
+            });
         } catch (error) {
-            if (error?.code === 11000) {
-                const raced = await Connection.findOne({ pairKey });
-                if (raced?.status === "pending" && String(raced.requester) === recipientId) {
-                    raced.status = "accepted";
-                    await raced.save();
-                    emitToUser(req, requesterId, "connectionAccepted", { connectionId: String(raced._id), userId: requesterId });
-                    emitToUser(req, recipientId, "connectionAccepted", { connectionId: String(raced._id), userId: recipientId });
-                    await refreshPresence(req);
-                    return res.json({ success: true, message: "Connection request accepted", connection: { id: String(raced._id), status: "accepted" }, autoAccepted: true });
-                }
-                return res.status(409).json({ success: false, message: "A connection request already exists" });
+            if (error?.code !== 11000) throw error;
+
+            // The unique pair index is the final arbiter for concurrent A->B/B->A
+            // requests. Only one request document can exist for this user pair.
+            const raced = await Connection.findOne({ pairKey }).lean();
+            if (!raced) {
+                return res.status(409).json({ success: false, message: "A connection request is being processed; please retry" });
             }
-            throw error;
+            if (raced.status === "accepted") {
+                return res.status(409).json({ success: false, message: "You are already connected" });
+            }
+
+            if (String(raced.requester) === recipientId && String(raced.recipient) === requesterId) {
+                const accepted = await Connection.findOneAndUpdate(
+                    { _id: raced._id, requester: recipientId, recipient: requesterId, status: "pending" },
+                    { $set: { status: "accepted" } },
+                    { new: true }
+                );
+
+                if (accepted) {
+                    const payload = { connectionId: String(accepted._id), userId: requesterId, acceptedBy: requesterId };
+                    emitToUser(req, requesterId, "connectionAccepted", payload);
+                    emitToUser(req, recipientId, "connectionAccepted", { ...payload, userId: recipientId });
+                    await refreshPresence(req);
+                    return res.json({
+                        success: true,
+                        message: "Connection request accepted",
+                        connection: { id: String(accepted._id), status: "accepted" },
+                        autoAccepted: true
+                    });
+                }
+
+                const latest = await Connection.findOne({ pairKey }).lean();
+                if (latest?.status === "accepted") {
+                    return res.status(409).json({ success: false, message: "You are already connected" });
+                }
+            }
+
+            return res.status(409).json({ success: false, message: "Connection request already exists" });
         }
     } catch (error) {
         console.error("Send connection request error:", error);
