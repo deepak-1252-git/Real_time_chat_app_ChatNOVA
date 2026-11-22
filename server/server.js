@@ -117,6 +117,78 @@ io.on("connection", (socket) => {
         } catch (error) { console.error("Stop typing authorization error:", error); }
     });
 
+    socket.on("toggleMessageReaction", async ({ messageId, emoji } = {}, acknowledge = () => { }) => {
+        const allowedEmojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+
+        try {
+            if (!messageId || !/^[a-fA-F0-9]{24}$/.test(String(messageId))) {
+                return acknowledge({ success: false, message: "Invalid message" });
+            }
+            if (!allowedEmojis.includes(emoji)) {
+                return acknowledge({ success: false, message: "Invalid reaction" });
+            }
+
+            const targetMessage = await Message.findById(messageId).select("sender receiver");
+            if (!targetMessage) {
+                return acknowledge({ success: false, message: "Message not found" });
+            }
+
+            const senderId = String(targetMessage.sender);
+            const receiverId = String(targetMessage.receiver);
+            const currentUserId = String(socket.userId);
+
+            if (![senderId, receiverId].includes(currentUserId) ||
+                !(await hasAcceptedConnection(senderId, receiverId))) {
+                return acknowledge({ success: false, message: "Not authorized to react to this message" });
+            }
+
+            const existing = await Message.findOne({
+                _id: messageId,
+                "reactions.user": socket.userId
+            }).select("reactions");
+
+            const currentReaction = existing?.reactions?.find(
+                (item) => String(item.user) === currentUserId
+            );
+
+            let updatedMessage;
+            if (currentReaction?.emoji === emoji) {
+                updatedMessage = await Message.findByIdAndUpdate(
+                    messageId,
+                    { $pull: { reactions: { user: socket.userId } } },
+                    { new: true }
+                ).select("_id reactions");
+            } else if (currentReaction) {
+                updatedMessage = await Message.findOneAndUpdate(
+                    { _id: messageId, "reactions.user": socket.userId },
+                    { $set: { "reactions.$.emoji": emoji } },
+                    { new: true }
+                ).select("_id reactions");
+            } else {
+                updatedMessage = await Message.findByIdAndUpdate(
+                    messageId,
+                    { $push: { reactions: { user: socket.userId, emoji } } },
+                    { new: true }
+                ).select("_id reactions");
+            }
+
+            const reactionData = {
+                messageId: String(updatedMessage._id),
+                reactions: updatedMessage.reactions.map((reaction) => ({
+                    userId: String(reaction.user),
+                    emoji: reaction.emoji
+                }))
+            };
+
+            io.to(`user:${senderId}`).emit("messageReactionUpdated", reactionData);
+            io.to(`user:${receiverId}`).emit("messageReactionUpdated", reactionData);
+            acknowledge({ success: true, ...reactionData });
+        } catch (error) {
+            console.error("Message reaction error:", error);
+            acknowledge({ success: false, message: "Could not update reaction" });
+        }
+    });
+
     socket.on("mark-messages-read", async ({ senderId } = {}) => {
         try {
             if (!(await hasAcceptedConnection(socket.userId, senderId))) return rejectSocketAction(socket);
@@ -208,7 +280,7 @@ io.on("connection", (socket) => {
                     receiver: receiverId,
                     message: message.trim(),
                     isRead: isReceiverInChat
-
+                    
                 });
 
             const messageData = {
@@ -217,6 +289,7 @@ io.on("connection", (socket) => {
                 receiverId: receiverId,
                 message: newMessage.message,
                 isRead: newMessage.isRead,
+                reactions: [],
                 createdAt: newMessage.createdAt
             };
 

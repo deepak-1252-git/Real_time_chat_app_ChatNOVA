@@ -12,6 +12,7 @@ function MessageInput({
     const typingTimeoutRef = useRef(null);
     const callbacksRef = useRef({});
     const inputRef = useRef(null);
+    const emojiPickerRef = useRef(null);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     useEffect(() => {
@@ -20,6 +21,22 @@ function MessageInput({
             onStopTyping
         };
     }, [onTyping, onStopTyping]);
+
+    useEffect(() => {
+        if (!showEmojiPicker) return;
+
+        const handleOutsideClick = (event) => {
+            if (!emojiPickerRef.current?.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener("pointerdown", handleOutsideClick);
+
+        return () => {
+            document.removeEventListener("pointerdown", handleOutsideClick);
+        };
+    }, [showEmojiPicker]);
 
     useEffect(() => {
         return () => {
@@ -100,7 +117,7 @@ function MessageInput({
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === "Escape") {   
+        if (e.key === "Escape") {
             setShowEmojiPicker(false);
         }
 
@@ -122,7 +139,7 @@ function MessageInput({
                 📎
             </button>
 
-            <div className="emoji-picker-wrapper">
+            <div className="emoji-picker-wrapper" ref={emojiPickerRef}>
 
                 <button
                     type="button"

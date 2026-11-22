@@ -162,7 +162,12 @@ router.get("/:userId", protect, async (req, res) => {
             senderId: msg.sender,
             receiverId: msg.receiver,
             message: msg.message,
-            createdAt: msg.createdAt
+            reactions: (msg.reactions || []).map((reaction) => ({
+                userId: String(reaction.user),
+                emoji: reaction.emoji
+            })),
+            createdAt: msg.createdAt,
+            isRead: msg.isRead
         }));
 
         res.json({

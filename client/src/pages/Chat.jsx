@@ -165,12 +165,21 @@ function Chat() {
         }
     }, [selectedUser]);
 
+    const handleMessageReactionUpdated = useCallback(({ messageId, reactions }) => {
+        setMessages((prevMessages) => prevMessages.map((msg) =>
+            String(msg._id) === String(messageId)
+                ? { ...msg, reactions }
+                : msg
+        ));
+    }, []);
+
     const {
         onlineUsers,
         sendMessage: sendSocketMessage,
         emitTyping,
         emitStopTyping,
         markMessagesRead,
+        emitMessageReaction,
         callUser: sendCallUser,
         acceptCall: sendCallAccepted,
         sendIceCandidate,
@@ -187,7 +196,8 @@ function Chat() {
 
             onTyping: handleTyping,
             onStopTyping: handleStopTyping,
-            onMessagesRead: handleMessagesRead
+            onMessagesRead: handleMessagesRead,
+            onMessageReactionUpdated: handleMessageReactionUpdated
 
         }
     );
@@ -822,8 +832,8 @@ function Chat() {
     const onlineConnections = connections.filter((item) => onlineIds.has(String(item.userId)));
     const sidebarUsers = activeTab === "online" ? onlineConnections
         : activeTab === "meet" ? connections
-        : activeTab === "discover" ? discoverUsers
-        : { incoming, outgoing };
+            : activeTab === "discover" ? discoverUsers
+                : { incoming, outgoing };
 
     const handleConnectionAction = async (action, item) => {
         setActionError("");
@@ -951,6 +961,7 @@ function Chat() {
                 isTyping={typingUsers[String(selectedUser)] === true}
                 onTyping={emitTyping}
                 onStopTyping={emitStopTyping}
+                onReact={emitMessageReaction}
             />
 
             {callStatus === "calling" && (

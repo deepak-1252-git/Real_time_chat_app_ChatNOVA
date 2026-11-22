@@ -701,7 +701,7 @@ body {
 
     border-radius: 12px;
     overflow: hidden;
- 
+
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
 }
 
@@ -1175,7 +1175,7 @@ body {
 
 
     /* Input */
-    .emoji-toggle{
+    .emoji-toggle {
         display: none;
     }
 
@@ -2013,6 +2013,95 @@ body {
 .connection-error {
     color: #dc2626;
 }
+
+/*-------- MESSAGE REACTIONS -------- */
+
+.message-bubble {
+    position: relative;
+}
+
+.message-reactions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.reaction-chip,
+.reaction-add-button,
+.reaction-options button {
+    border: none;
+    background: none;
+    color: #000000;
+    border-radius: 16px;
+    min-height: 10px;
+    padding: 2px 4px;
+    font-size: 15px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.reaction-chip.reacted-by-me {
+    /* border-color: #ffffff; */
+    background: none;
+}
+
+.reaction-chip span {
+    font-size: 10px;
+    font-weight: 300;
+}
+
+.reaction-picker {
+    position: relative;
+    display: inline-flex;
+}
+
+.reaction-options {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    z-index: 20;
+    padding: 2px;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.689);
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.16);
+    white-space: nowrap;
+}
+
+.reaction-picker:hover .reaction-options,
+.reaction-picker:focus-within .reaction-options {
+    display: flex;
+}
+
+.reaction-options button {
+    width: 25px;
+    height: 25px;
+    border: 0;
+    font-size: 17px;
+    padding: 0;
+}
+
+.reaction-options button:hover,
+.reaction-chip:hover,
+.reaction-add-button:hover {
+    background: #000dff;
+}
+
+@media (hover: none) {
+    .reaction-options {
+        left: auto;
+        right: 0;
+    }
+}
+
 
 /* ChatNOVA dark theme */
 body[data-chatnova-theme="dark"] {

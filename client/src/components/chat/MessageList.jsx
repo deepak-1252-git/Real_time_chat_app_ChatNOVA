@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 
-function MessageList({ messages, currentUserId }) {
+function MessageList({ messages, currentUserId , onReact }) {
 
     const messagesEndRef = useRef(null);
 
@@ -46,6 +46,8 @@ function MessageList({ messages, currentUserId }) {
                             key={message._id || index}
                             message={message}
                             isMine={isMine}
+                            currentUserId={currentUserId}
+                            onReact={onReact}
                         />
                     );
 

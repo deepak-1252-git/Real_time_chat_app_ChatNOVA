@@ -17,6 +17,7 @@ function useChatSocket(
         onTyping,
         onStopTyping,
         onMessagesRead,
+        onMessageReactionUpdated,
         onConnectionRequestReceived,
         onConnectionAccepted,
         onConnectionRemoved,
@@ -41,6 +42,7 @@ function useChatSocket(
         onTyping,
         onStopTyping,
         onMessagesRead,
+        onMessageReactionUpdated,
         onConnectionRequestReceived,
         onConnectionAccepted,
         onConnectionRemoved,
@@ -56,6 +58,7 @@ function useChatSocket(
             onTyping,
             onStopTyping,
             onMessagesRead,
+            onMessageReactionUpdated,
             onConnectionRequestReceived,
             onConnectionAccepted,
             onConnectionRemoved,
@@ -67,6 +70,7 @@ function useChatSocket(
         onTyping,
         onStopTyping,
         onMessagesRead,
+        onMessageReactionUpdated,
         onConnectionRequestReceived,
         onConnectionAccepted,
         onConnectionRemoved,
@@ -173,6 +177,10 @@ function useChatSocket(
             callbacksRef.current.onMessagesRead?.({ readerId });
         };
 
+        const handleMessageReactionUpdated = (data) => {
+            callbacksRef.current.onMessageReactionUpdated?.(data);
+        };
+
         const handleConnectionRequestReceived = (data) => callbacksRef.current.onConnectionRequestReceived?.(data);
         const handleConnectionAccepted = (data) => callbacksRef.current.onConnectionAccepted?.(data);
         const handleConnectionRemoved = (data) => callbacksRef.current.onConnectionRemoved?.(data);
@@ -206,6 +214,7 @@ function useChatSocket(
         socket.on("user-typing", handleUserTyping);
         socket.on("user-stop-typing", handleUserStopTyping);
         socket.on("messages-read", handleMessagesRead);
+        socket.on("messageReactionUpdated", handleMessageReactionUpdated);
         socket.on("connectionRequestReceived", handleConnectionRequestReceived);
         socket.on("connectionAccepted", handleConnectionAccepted);
         socket.on("connectionRemoved", handleConnectionRemoved);
@@ -241,6 +250,7 @@ function useChatSocket(
             socket.off("user-typing", handleUserTyping);
             socket.off("user-stop-typing", handleUserStopTyping);
             socket.off("messages-read", handleMessagesRead);
+            socket.off("messageReactionUpdated", handleMessageReactionUpdated);
             socket.off("connectionRequestReceived", handleConnectionRequestReceived);
             socket.off("connectionAccepted", handleConnectionAccepted);
             socket.off("connectionRemoved", handleConnectionRemoved);
@@ -337,6 +347,17 @@ function useChatSocket(
         });
     };
 
+    const emitMessageReaction = (messageId, emoji) => {
+        return new Promise((resolve) => {
+            if (!socket.connected) {
+                resolve({ success: false, message: "Not connected to server" });
+                return;
+            }
+
+            socket.emit("toggleMessageReaction", { messageId, emoji }, resolve);
+        });
+    };
+
     const setActiveChat = (userId) => {
         activeChatRef.current = userId
             ? String(userId)
@@ -396,7 +417,8 @@ function useChatSocket(
 
         emitTyping,
         emitStopTyping,
-        markMessagesRead
+        markMessagesRead,
+        emitMessageReaction
 
     };
 }

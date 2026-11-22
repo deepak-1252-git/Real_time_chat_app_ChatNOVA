@@ -19,7 +19,8 @@ function ChatWindow({
 
     isTyping,
     onTyping,
-    onStopTyping
+    onStopTyping,
+    onReact
 }) {
 
     if (!selectedUser) {
@@ -47,6 +48,7 @@ function ChatWindow({
             <MessageList
                 messages={messages}
                 currentUserId={currentUserId}
+                onReact={onReact}
             />
 
             <MessageInput
