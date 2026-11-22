@@ -1,4 +1,5 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+import EmojiPicker from "emoji-picker-react";
 
 function MessageInput({
     message,
@@ -9,8 +10,9 @@ function MessageInput({
     onStopTyping
 }) {
     const typingTimeoutRef = useRef(null);
-
     const callbacksRef = useRef({});
+    const inputRef = useRef(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     useEffect(() => {
         callbacksRef.current = {
@@ -66,11 +68,42 @@ function MessageInput({
     const handleSend = () => {
         if (!message.trim()) return;
 
+        setShowEmojiPicker(false);
         stopTyping();
         onSend();
     };
 
+    const handleEmojiClick = (emojiData) => {
+        const emoji = emojiData.emoji;
+        const input = inputRef.current;
+
+        const start = input?.selectionStart ?? message.length;
+        const end = input?.selectionEnd ?? message.length;
+
+        const updatedMessage =
+            message.slice(0, start) +
+            emoji +
+            message.slice(end);
+
+        setMessage(updatedMessage);
+
+        requestAnimationFrame(() => {
+            input?.focus();
+
+            const cursorPosition = start + emoji.length;
+
+            input?.setSelectionRange(
+                cursorPosition,
+                cursorPosition
+            );
+        });
+    };
+
     const handleKeyDown = (e) => {
+        if (e.key === "Escape") {   
+            setShowEmojiPicker(false);
+        }
+
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
@@ -84,11 +117,44 @@ function MessageInput({
                 type="button"
                 className="input-action"
                 title="Attach file"
+                aria-label="Attach file"
             >
                 📎
             </button>
 
+            <div className="emoji-picker-wrapper">
+
+                <button
+                    type="button"
+                    className="input-action emoji-toggle"
+                    title="Choose emoji"
+                    aria-label="Choose emoji"
+                    aria-expanded={showEmojiPicker}
+                    onClick={() =>
+                        setShowEmojiPicker(prev => !prev)
+                    }
+                >
+                    😊
+                </button>
+
+                {showEmojiPicker && (
+                    <div className="emoji-picker-popup">
+                        <EmojiPicker
+                            onEmojiClick={handleEmojiClick}
+                            height={350}
+                            width="100%"
+                            searchPlaceHolder="    Search emoji..."
+                            previewConfig={{
+                                showPreview: false
+                            }}
+                        />
+                    </div>
+                )}
+
+            </div>
+
             <input
+                ref={inputRef}
                 type="text"
                 placeholder="Type a message..."
                 value={message}
@@ -101,6 +167,7 @@ function MessageInput({
                 className="send-button"
                 onClick={handleSend}
                 disabled={!message.trim()}
+                aria-label="Send message"
             >
                 ➤
             </button>

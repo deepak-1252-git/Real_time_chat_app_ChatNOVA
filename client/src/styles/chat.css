@@ -398,9 +398,9 @@ body {
     font-weight: 600;
 }
 
-/* .user-info span {
+.user-info span {
     font-size: 12px;
-} */
+}
 
 .status-dot {
     display: inline-block;
@@ -655,6 +655,7 @@ body {
     font-size: 18px;
 }
 
+
 .send-button {
     width: 42px;
     height: 42px;
@@ -670,6 +671,38 @@ body {
     color: white;
 
     font-size: 18px;
+}
+
+/* ================= EMOJI PICKER ================= */
+
+.emoji-picker-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.emoji-toggle {
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.emoji-toggle:hover {
+    background: #f1f5f9;
+}
+
+.emoji-picker-popup {
+    position: absolute;
+    bottom: 55px;
+    left: 0;
+    width: 320px;
+    max-width: calc(100vw - 30px);
+    z-index: 1000;
+
+    border-radius: 12px;
+    overflow: hidden;
+ 
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
 }
 
 .send-button:disabled {
@@ -1029,7 +1062,6 @@ body {
 
 }
 
-
 /* =========================================
    MOBILE
    ========================================= */
@@ -1143,6 +1175,9 @@ body {
 
 
     /* Input */
+    .emoji-toggle{
+        display: none;
+    }
 
     .message-input-area {
         min-height: 62px;
@@ -1906,8 +1941,7 @@ body {
     color: #2457b2;
 }
 
-.connection-tab.active 
-.request-tab-badge{
+.connection-tab.active .request-tab-badge {
     background: #20be84;
     color: white;
 }
