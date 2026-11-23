@@ -10,6 +10,8 @@ const formatUser = (user, relation = "none", currentUserId) => ({
     username: user.username,
     profilePicture: user.profilePicture || "",
     status: user.preferences?.showOnlineStatus === false ? "offline" : (user.status || "offline"),
+    bio: user.bio || "",
+    lastSeen: user.preferences?.showLastSeen === false ? null : (user.lastSeen || null),
     relation
 });
 
@@ -28,7 +30,7 @@ const discoverUsers = async (req, res) => {
         if (q) filter.username = { $regex: escapeRegex(q), $options: "i" };
 
         const [users, total] = await Promise.all([
-            User.find(filter).select("_id username profilePicture status preferences.showOnlineStatus")
+            User.find(filter).select("_id username profilePicture bio status lastSeen preferences.showOnlineStatus preferences.showLastSeen")
                 .sort({ username: 1, _id: 1 }).skip((page - 1) * limit).limit(limit).lean(),
             User.countDocuments(filter)
         ]);
@@ -250,7 +252,7 @@ const getConnections = async (req, res) => {
         }).sort({ updatedAt: -1 }).lean();
         const otherIds = connections.map((item) => String(item.requester) === currentUserId ? item.recipient : item.requester);
         const users = await User.find({ _id: { $in: otherIds } })
-            .select("_id username profilePicture status preferences.showOnlineStatus").lean();
+            .select("_id username profilePicture bio status lastSeen preferences.showOnlineStatus preferences.showLastSeen").lean();
         const userMap = new Map(users.map((user) => [String(user._id), user]));
         const result = connections.map((connection) => {
             const otherId = String(connection.requester) === currentUserId ? connection.recipient : connection.requester;
@@ -270,7 +272,7 @@ const getConnectionRequests = async (req, res) => {
         const records = await Connection.find({ status: "pending", $or: [{ requester: currentUserId }, { recipient: currentUserId }] })
             .sort({ createdAt: -1 }).lean();
         const ids = records.map((item) => String(item.requester) === currentUserId ? item.recipient : item.requester);
-        const users = await User.find({ _id: { $in: ids } }).select("_id username profilePicture status preferences.showOnlineStatus").lean();
+        const users = await User.find({ _id: { $in: ids } }).select("_id username profilePicture bio status lastSeen preferences.showOnlineStatus preferences.showLastSeen").lean();
         const userMap = new Map(users.map((user) => [String(user._id), user]));
         const incoming = [], outgoing = [];
         for (const record of records) {

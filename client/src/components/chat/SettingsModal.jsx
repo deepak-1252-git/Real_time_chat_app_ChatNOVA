@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
     theme: "light",
     notificationSound: true,
     notificationSoundType: "default",
-    showOnlineStatus: true
+    showOnlineStatus: true,
+    showLastSeen: true
 };
 
 function applyTheme(theme) {
@@ -43,13 +44,15 @@ function SettingsModal({ onClose }) {
                 localStorage.setItem("chatnova_notification_sound", String(next.notificationSound));
                 localStorage.setItem("chatnova_notification_sound_type", next.notificationSoundType || "default");
                 localStorage.setItem("chatnova_show_online_status", String(next.showOnlineStatus));
+                localStorage.setItem("chatnova_show_last_seen", String(next.showLastSeen));
             } catch (loadError) {
                 if (active) {
                     const savedTheme = localStorage.getItem("chatnova_theme") || "light";
                     const savedSound = localStorage.getItem("chatnova_notification_sound") !== "false";
                     const savedOnline = localStorage.getItem("chatnova_show_online_status") !== "false";
+                    const savedLastSeen = localStorage.getItem("chatnova_show_last_seen") !== "false";
                     const savedSoundType = localStorage.getItem("chatnova_notification_sound_type") || "default";
-                    setSettings({ ...DEFAULT_SETTINGS, theme: savedTheme, notificationSound: savedSound, notificationSoundType: savedSoundType, showOnlineStatus: savedOnline });
+                    setSettings({ ...DEFAULT_SETTINGS, theme: savedTheme, notificationSound: savedSound, notificationSoundType: savedSoundType, showOnlineStatus: savedOnline, showLastSeen: savedLastSeen });
                     applyTheme(savedTheme);
                     setError(loadError.message || "Could not load saved settings. Local preferences are shown.");
                 }
@@ -95,6 +98,7 @@ function SettingsModal({ onClose }) {
             if (key === "notificationSound") localStorage.setItem("chatnova_notification_sound", String(value));
             if (key === "notificationSoundType") localStorage.setItem("chatnova_notification_sound_type", value);
             if (key === "showOnlineStatus") localStorage.setItem("chatnova_show_online_status", String(value));
+            if (key === "showLastSeen") localStorage.setItem("chatnova_show_last_seen", String(value));
             setNotice("Setting saved.");
         } catch (saveError) {
             setSettings(previous);
@@ -185,6 +189,19 @@ function SettingsModal({ onClose }) {
                                 className={`settings-switch ${settings.showOnlineStatus ? "is-on" : ""}`}
                                 disabled={Boolean(savingKey)}
                                 onClick={() => updateSetting("showOnlineStatus", !settings.showOnlineStatus)}
+                            ><span /></button>
+                        </div>
+
+                        <div className="settings-option">
+                            <div><strong>Show last seen</strong><span>When off, connections won't see when you were last active.</span></div>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={settings.showLastSeen}
+                                aria-label="Show last seen"
+                                className={`settings-switch ${settings.showLastSeen ? "is-on" : ""}`}
+                                disabled={Boolean(savingKey)}
+                                onClick={() => updateSetting("showLastSeen", !settings.showLastSeen)}
                             ><span /></button>
                         </div>
 

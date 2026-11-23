@@ -22,6 +22,8 @@ const formatUserListItem = (user, relation = "none") => ({
     username: user.username,
     profilePicture: user.profilePicture || "",
     status: user.preferences?.showOnlineStatus === false ? "offline" : (user.status || "offline"),
+    bio: user.bio || "",
+    lastSeen: user.preferences?.showLastSeen === false ? null : (user.lastSeen || null),
     relation
 });
 
@@ -29,7 +31,7 @@ const getUser = async (req, res) => {
     try {
         const currentUserId = req.user.userId;
         const users = await User.find({ _id: { $ne: currentUserId } })
-            .select("_id username profilePicture status preferences.showOnlineStatus");
+            .select("_id username profilePicture bio status lastSeen preferences.showOnlineStatus preferences.showLastSeen");
         const relationMap = await getRelationMap(currentUserId, users);
         return res.json({
             success: true,
@@ -44,7 +46,7 @@ const getUser = async (req, res) => {
 const getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.userId)
-            .select("_id username email profilePicture status createdAt preferences");
+            .select("_id username email profilePicture bio status lastSeen createdAt preferences");
 
         if (!user) {
             return res.status(404).json({
@@ -60,9 +62,11 @@ const getMe = async (req, res) => {
                 username: user.username,
                 email: user.email,
                 profilePicture: user.profilePicture || "",
+                bio: user.bio || "",
                 status: user.status,
+                lastSeen: user.lastSeen || null,
                 createdAt: user.createdAt,
-                preferences: user.preferences || { theme: "light", notificationSound: true, showOnlineStatus: true }
+                preferences: user.preferences || { theme: "light", notificationSound: true, showOnlineStatus: true, showLastSeen: true }
             }
         });
     } catch (error) {
@@ -77,54 +81,75 @@ const getMe = async (req, res) => {
 
 const updateMe = async (req, res) => {
     try {
-        const rawUsername = req.body?.username;
-        if (typeof rawUsername !== "string") {
-            return res.status(400).json({ success: false, message: "Username must be a string" });
+        const body = req.body || {};
+        const updates = {};
+
+        if (Object.prototype.hasOwnProperty.call(body, "username")) {
+            if (typeof body.username !== "string") {
+                return res.status(400).json({ success: false, message: "Username must be a string" });
+            }
+            const username = body.username.trim();
+            if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Username must be 3–20 characters and contain only letters, numbers, or underscores"
+                });
+            }
+            const duplicateUser = await User.findOne({
+                username: { $regex: `^${username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+                _id: { $ne: req.user.userId }
+            }).select("_id");
+            if (duplicateUser) {
+                return res.status(409).json({ success: false, message: "This username is already taken" });
+            }
+            updates.username = username;
         }
 
-        const username = rawUsername.trim();
-        if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
-            return res.status(400).json({
-                success: false,
-                message: "Username must be 3–20 characters and contain only letters, numbers, or underscores"
-            });
+        if (Object.prototype.hasOwnProperty.call(body, "bio")) {
+            if (typeof body.bio !== "string") {
+                return res.status(400).json({ success: false, message: "Bio must be a string" });
+            }
+            const bio = body.bio.trim();
+            if (bio.length > 120) {
+                return res.status(400).json({ success: false, message: "Bio must be 120 characters or fewer" });
+            }
+            updates.bio = bio;
         }
 
-        const currentUserId = req.user.userId;
-        const duplicateUser = await User.findOne({
-            username: { $regex: `^${username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
-            _id: { $ne: currentUserId }
-        }).select("_id");
-
-        if (duplicateUser) {
-            return res.status(409).json({ success: false, message: "This username is already taken" });
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ success: false, message: "Provide a username or bio to update" });
         }
 
         const user = await User.findByIdAndUpdate(
-            currentUserId,
-            { $set: { username } },
+            req.user.userId,
+            { $set: updates },
             { returnDocument: "after", runValidators: true }
-        ).select("_id username email profilePicture status createdAt preferences");
+        ).select("_id username email profilePicture bio status lastSeen createdAt preferences");
 
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Refresh each connected user's online list so the new username appears immediately.
         if (typeof req.app.locals.refreshOnlineUsers === "function") {
             await req.app.locals.refreshOnlineUsers();
+        }
+        if (typeof req.app.locals.refreshPresenceForUser === "function") {
+            await req.app.locals.refreshPresenceForUser(user._id);
         }
 
         return res.json({
             success: true,
-            message: "Username updated successfully",
+            message: "Profile updated successfully",
             user: {
                 id: String(user._id),
                 username: user.username,
                 email: user.email,
                 profilePicture: user.profilePicture || "",
+                bio: user.bio || "",
                 status: user.status,
-                createdAt: user.createdAt
+                lastSeen: user.lastSeen || null,
+                createdAt: user.createdAt,
+                preferences: user.preferences
             }
         });
     } catch (error) {
@@ -172,12 +197,15 @@ const uploadProfilePicture = async (req, res) => {
             req.user.userId,
             { $set: { profilePicture: imageUrl } },
             { returnDocument: "after", runValidators: true }
-        ).select("_id username email profilePicture status createdAt preferences");
+        ).select("_id username email profilePicture bio status lastSeen createdAt preferences");
 
         if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
         if (typeof req.app.locals.refreshOnlineUsers === "function") {
             await req.app.locals.refreshOnlineUsers();
+        }
+        if (typeof req.app.locals.refreshPresenceForUser === "function") {
+            await req.app.locals.refreshPresenceForUser(user._id);
         }
 
         return res.json({
@@ -185,7 +213,8 @@ const uploadProfilePicture = async (req, res) => {
             message: "Profile picture updated successfully",
             user: {
                 id: String(user._id), username: user.username, email: user.email,
-                profilePicture: user.profilePicture || "", status: user.status, createdAt: user.createdAt
+                profilePicture: user.profilePicture || "", bio: user.bio || "", status: user.status,
+                lastSeen: user.lastSeen || null, createdAt: user.createdAt, preferences: user.preferences
             }
         });
     } catch (error) {
@@ -228,6 +257,13 @@ const updateMySettings = async (req, res) => {
             updates["preferences.showOnlineStatus"] = body.showOnlineStatus;
         }
 
+        if (Object.prototype.hasOwnProperty.call(body, "showLastSeen")) {
+            if (typeof body.showLastSeen !== "boolean") {
+                return res.status(400).json({ success: false, message: "Show last seen must be a boolean" });
+            }
+            updates["preferences.showLastSeen"] = body.showLastSeen;
+        }
+
         if (Object.keys(updates).length === 0) {
             return res.status(400).json({ success: false, message: "No valid settings were provided" });
         }
@@ -242,6 +278,11 @@ const updateMySettings = async (req, res) => {
 
         if (Object.prototype.hasOwnProperty.call(updates, "preferences.showOnlineStatus") && typeof req.app.locals.refreshOnlineUsers === "function") {
             await req.app.locals.refreshOnlineUsers();
+        }
+        if ((Object.prototype.hasOwnProperty.call(updates, "preferences.showOnlineStatus") ||
+            Object.prototype.hasOwnProperty.call(updates, "preferences.showLastSeen")) &&
+            typeof req.app.locals.refreshPresenceForUser === "function") {
+            await req.app.locals.refreshPresenceForUser(req.user.userId);
         }
 
         return res.json({

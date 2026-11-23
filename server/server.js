@@ -96,6 +96,7 @@ io.on("connection", (socket) => {
             onlineUsers.get(userKey).add(socket.id);
             await User.findByIdAndUpdate(userKey, { status: "online" });
             await sendOnlineUsers();
+            await refreshPresenceForUser(userKey);
         } catch (error) {
             console.error("Socket presence registration error:", error);
         }
@@ -469,10 +470,11 @@ io.on("connection", (socket) => {
             // No active sockets remaining
             onlineUsers.delete(userId);
 
+            const lastSeen = new Date();
             await User.findByIdAndUpdate(
                 userId,
                 {
-                    status: "offline"
+                    $set: { status: "offline", lastSeen }
                 }
             );
 
@@ -482,6 +484,7 @@ io.on("connection", (socket) => {
             );
 
             await sendOnlineUsers();
+            await refreshPresenceForUser(userId);
 
         } catch (error) {
 
@@ -503,9 +506,10 @@ const sendOnlineUsers = async () => {
         const visibleOnlineUsers = await User.find({
             _id: { $in: onlineUserIds },
             "preferences.showOnlineStatus": { $ne: false }
-        }).select("_id username profilePicture").lean();
+        }).select("_id username profilePicture bio").lean();
         const visibleById = new Map(visibleOnlineUsers.map((user) => [String(user._id), {
-            userId: String(user._id), username: user.username, profilePicture: user.profilePicture || "", status: "online"
+            userId: String(user._id), username: user.username, profilePicture: user.profilePicture || "",
+            bio: user.bio || "", status: "online"
         }]));
 
         for (const [currentUserId, socketIds] of onlineUsers.entries()) {
@@ -524,9 +528,41 @@ const sendOnlineUsers = async () => {
     }
 };
 
-// Expose the online-list refresh function to authenticated controllers.
+// Notify only accepted connections about a user's current presence and privacy-filtered last seen.
+const refreshPresenceForUser = async (userId) => {
+    try {
+        const user = await User.findById(userId)
+            .select("_id status bio lastSeen preferences.showOnlineStatus preferences.showLastSeen")
+            .lean();
+        if (!user) return;
+
+        const connections = await Connection.find({
+            status: "accepted",
+            $or: [{ requester: userId }, { recipient: userId }]
+        }).select("requester recipient").lean();
+
+        const payload = {
+            userId: String(user._id),
+            status: user.preferences?.showOnlineStatus === false ? "offline" : (user.status || "offline"),
+            bio: user.bio || "",
+            lastSeen: user.preferences?.showLastSeen === false ? null : (user.lastSeen || null)
+        };
+
+        for (const connection of connections) {
+            const otherUserId = String(connection.requester) === String(userId)
+                ? connection.recipient
+                : connection.requester;
+            io.to(`user:${String(otherUserId)}`).emit("presenceUpdated", payload);
+        }
+    } catch (error) {
+        console.error("Refresh user presence error:", error);
+    }
+};
+
+// Expose refresh functions to authenticated controllers.
 app.locals.io = io;
 app.locals.refreshOnlineUsers = sendOnlineUsers;
+app.locals.refreshPresenceForUser = refreshPresenceForUser;
 app.locals.disconnectUserSockets = async (userId) => {
     const userKey = String(userId);
     const socketIds = onlineUsers.get(userKey);

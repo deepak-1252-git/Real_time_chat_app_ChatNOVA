@@ -7,6 +7,8 @@ function ProfileModal({ onClose, user: fallbackUser, onProfileUpdated }) {
     const [error, setError] = useState("");
     const [editing, setEditing] = useState(false);
     const [username, setUsername] = useState(fallbackUser?.username || "");
+    const [bio, setBio] = useState(fallbackUser?.bio || "");
+    const [editingBio, setEditingBio] = useState(false);
     const [saving, setSaving] = useState(false);
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState("");
@@ -33,6 +35,7 @@ function ProfileModal({ onClose, user: fallbackUser, onProfileUpdated }) {
 
                 setProfile(data.user);
                 setUsername(data.user.username || "");
+                setBio(data.user.bio || "");
                 localStorage.setItem("user", JSON.stringify(data.user));
                 onProfileUpdated?.(data.user);
             } catch (err) {
@@ -87,6 +90,42 @@ function ProfileModal({ onClose, user: fallbackUser, onProfileUpdated }) {
             setEditing(false);
         } catch (err) {
             setError(err.message || "Unable to update username");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleBioSave = async (event) => {
+        event.preventDefault();
+        const trimmedBio = bio.trim();
+        if (trimmedBio.length > 120) {
+            setError("Bio must be 120 characters or fewer.");
+            return;
+        }
+
+        setSaving(true);
+        setError("");
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ bio: trimmedBio })
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "Unable to update bio");
+            }
+            setProfile(data.user);
+            setBio(data.user.bio || "");
+            localStorage.setItem("user", JSON.stringify(data.user));
+            onProfileUpdated?.(data.user);
+            setEditingBio(false);
+        } catch (err) {
+            setError(err.message || "Unable to update bio");
         } finally {
             setSaving(false);
         }
@@ -189,6 +228,34 @@ function ProfileModal({ onClose, user: fallbackUser, onProfileUpdated }) {
                         </div>
                         <div className="profile-details">
                             <div><span>Email</span><strong>{profile?.email || "Not available"}</strong></div>
+                            <div className="profile-bio-row">
+                                <span>Bio</span>
+                                {editingBio ? (
+                                    <form className="profile-bio-form" onSubmit={handleBioSave}>
+                                        <textarea
+                                            value={bio}
+                                            onChange={(event) => setBio(event.target.value.slice(0, 120))}
+                                            maxLength={120}
+                                            rows={3}
+                                            placeholder="Tell people a little about yourself..."
+                                            aria-label="Your bio"
+                                            disabled={saving}
+                                        />
+                                        <div className="profile-bio-footer">
+                                            <small>{bio.length}/120</small>
+                                            <div className="profile-edit-actions">
+                                                <button type="submit" disabled={saving}>{saving ? "Saving..." : "Save bio"}</button>
+                                                <button type="button" onClick={() => { setEditingBio(false); setBio(profile?.bio || ""); setError(""); }} disabled={saving}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="profile-bio-value">
+                                        <strong>{profile?.bio || "Add a short bio about yourself."}</strong>
+                                        <button type="button" onClick={() => { setEditingBio(true); setError(""); }}>Edit</button>
+                                    </div>
+                                )}
+                            </div>
                             <div className="profile-username-row">
                                 <span>Username</span>
                                 {editing ? (

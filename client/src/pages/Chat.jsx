@@ -25,6 +25,7 @@ function Chat() {
     const [unreadCounts, setUnreadCounts] = useState({});
     const [showChat, setShowChat] = useState(false);
     const [typingUsers, setTypingUsers] = useState({});
+    const [presenceByUser, setPresenceByUser] = useState({});
     const [discoverQuery, setDiscoverQuery] = useState("");
 
     const messagesEndRef = useRef(null);
@@ -173,6 +174,17 @@ function Chat() {
         ));
     }, []);
 
+    const handlePresenceUpdated = useCallback((presence) => {
+        if (!presence?.userId) return;
+        setPresenceByUser((prev) => ({
+            ...prev,
+            [String(presence.userId)]: {
+                ...(prev[String(presence.userId)] || {}),
+                ...presence
+            }
+        }));
+    }, []);
+
     const {
         onlineUsers,
         sendMessage: sendSocketMessage,
@@ -197,7 +209,8 @@ function Chat() {
             onTyping: handleTyping,
             onStopTyping: handleStopTyping,
             onMessagesRead: handleMessagesRead,
-            onMessageReactionUpdated: handleMessageReactionUpdated
+            onMessageReactionUpdated: handleMessageReactionUpdated,
+            onPresenceUpdated: handlePresenceUpdated
 
         }
     );
@@ -344,12 +357,19 @@ function Chat() {
     // 
     // --------------------------------------------------------------------
 
-    const selectedUserData = connections.find(
+    const selectedUserBase = connections.find(
         (connection) => String(connection.userId) === String(selectedUser)
     ) || onlineUsers.find((onlineUser) => String(onlineUser.userId) === String(selectedUser));
+    const selectedUserData = {
+        ...(selectedUserBase || {}),
+        ...(presenceByUser[String(selectedUser)] || {})
+    };
 
     const selectedUsername = selectedUserData?.username || selectedUser;
     const selectedUserPicture = selectedUserData?.profilePicture || "";
+    const selectedUserIsOnline = selectedUserData?.status === "online" || onlineUsers.some(
+        (onlineUser) => String(onlineUser.userId) === String(selectedUser)
+    );
 
     const callerUserData = connections.find((connection) => String(connection.userId) === String(caller)) || onlineUsers.find((onlineUser) => String(onlineUser.userId) === String(caller));
 
@@ -950,11 +970,9 @@ function Chat() {
                 setMessage={setMessage}
                 onSend={sendMessage}
                 currentUserId={user.id}
-                isOnline={onlineUsers.some(
-                    (onlineUser) =>
-                        String(onlineUser.userId) ===
-                        String(selectedUser)
-                )}
+                isOnline={selectedUserIsOnline}
+                lastSeen={selectedUserData?.lastSeen || null}
+                bio={selectedUserData?.bio || ""}
                 onBack={handleBackToSidebar}
                 onAudioCall={startAudioCall}
                 onVideoCall={startVideoCall}

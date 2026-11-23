@@ -171,6 +171,64 @@ body {
     color: #dc2626;
 }
 
+
+
+/* Profile bio editor */
+.profile-bio-value {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.profile-bio-value strong {
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.profile-bio-value button {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.profile-bio-form {
+    display: grid;
+    gap: 8px;
+}
+
+.profile-bio-form textarea {
+    width: 100%;
+    resize: vertical;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #fff;
+    color: #172033;
+    font: inherit;
+}
+
+.profile-bio-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.profile-bio-footer small { color: #64748b; }
+
+body[data-chatnova-theme="dark"] .profile-bio-form textarea {
+    background: #111827;
+    border-color: #374151;
+    color: #f8fafc;
+}
+
+
 /*--------------- search-user----------------  */
 .user-search {
     position: relative;

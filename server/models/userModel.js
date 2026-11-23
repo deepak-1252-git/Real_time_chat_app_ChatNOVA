@@ -26,6 +26,18 @@ const userSchema = new mongoose.Schema(
             default: ""
         },
 
+        bio: {
+            type: String,
+            trim: true,
+            maxlength: 120,
+            default: ""
+        },
+
+        lastSeen: {
+            type: Date,
+            default: null
+        },
+        
         status: {
             type: String,
             default: "offline"
@@ -35,7 +47,8 @@ const userSchema = new mongoose.Schema(
             theme: { type: String, enum: ["light", "dark"], default: "light" },
             notificationSound: { type: Boolean, default: true },
             notificationSoundType: { type: String, enum: ["default", "softPop", "classic", "minimal", "digital"], default: "default" },
-            showOnlineStatus: { type: Boolean, default: true }
+            showOnlineStatus: { type: Boolean, default: true },
+            showLastSeen: { type: Boolean, default: true }
         }
     },
     {

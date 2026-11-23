@@ -13,6 +13,8 @@ function ChatWindow({
     onSend,
     currentUserId,
     isOnline,
+    lastSeen,
+    bio,
     onAudioCall,
     onVideoCall,
     onBack,
@@ -41,6 +43,8 @@ function ChatWindow({
                 isOnline={isOnline}
                 isTyping={isTyping}
                 onBack={onBack}
+                 lastSeen={lastSeen}
+                bio={bio}
                 onAudioCall={onAudioCall}
                 onVideoCall={onVideoCall}
             />

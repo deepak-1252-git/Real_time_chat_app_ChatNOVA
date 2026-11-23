@@ -18,6 +18,7 @@ function useChatSocket(
         onStopTyping,
         onMessagesRead,
         onMessageReactionUpdated,
+        onPresenceUpdated,
         onConnectionRequestReceived,
         onConnectionAccepted,
         onConnectionRemoved,
@@ -43,6 +44,7 @@ function useChatSocket(
         onStopTyping,
         onMessagesRead,
         onMessageReactionUpdated,
+        onPresenceUpdated,
         onConnectionRequestReceived,
         onConnectionAccepted,
         onConnectionRemoved,
@@ -59,6 +61,7 @@ function useChatSocket(
             onStopTyping,
             onMessagesRead,
             onMessageReactionUpdated,
+            onPresenceUpdated,
             onConnectionRequestReceived,
             onConnectionAccepted,
             onConnectionRemoved,
@@ -71,6 +74,7 @@ function useChatSocket(
         onStopTyping,
         onMessagesRead,
         onMessageReactionUpdated,
+        onPresenceUpdated,
         onConnectionRequestReceived,
         onConnectionAccepted,
         onConnectionRemoved,
@@ -181,6 +185,10 @@ function useChatSocket(
             callbacksRef.current.onMessageReactionUpdated?.(data);
         };
 
+        const handlePresenceUpdated = (data) => {
+            callbacksRef.current.onPresenceUpdated?.(data);
+        };
+
         const handleConnectionRequestReceived = (data) => callbacksRef.current.onConnectionRequestReceived?.(data);
         const handleConnectionAccepted = (data) => callbacksRef.current.onConnectionAccepted?.(data);
         const handleConnectionRemoved = (data) => callbacksRef.current.onConnectionRemoved?.(data);
@@ -215,6 +223,7 @@ function useChatSocket(
         socket.on("user-stop-typing", handleUserStopTyping);
         socket.on("messages-read", handleMessagesRead);
         socket.on("messageReactionUpdated", handleMessageReactionUpdated);
+        socket.on("presenceUpdated", handlePresenceUpdated);
         socket.on("connectionRequestReceived", handleConnectionRequestReceived);
         socket.on("connectionAccepted", handleConnectionAccepted);
         socket.on("connectionRemoved", handleConnectionRemoved);
@@ -251,6 +260,7 @@ function useChatSocket(
             socket.off("user-stop-typing", handleUserStopTyping);
             socket.off("messages-read", handleMessagesRead);
             socket.off("messageReactionUpdated", handleMessageReactionUpdated);
+            socket.off("presenceUpdated", handlePresenceUpdated);
             socket.off("connectionRequestReceived", handleConnectionRequestReceived);
             socket.off("connectionAccepted", handleConnectionAccepted);
             socket.off("connectionRemoved", handleConnectionRemoved);
