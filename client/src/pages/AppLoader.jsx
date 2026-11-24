@@ -82,26 +82,26 @@ function AppLoader({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isStarted) {
-    return (
-      <div className="app-loader">
-        <div className="loader-content welcome-card">
-          <div className="auth--logo">
-            <img src="/favicon.jpg" alt="ChatNOVA" className="logo--img" />
-          </div>
-          <h2>Welcome to ChatNOVA</h2>
-          <p className="ready-text">Identity verified. You may now start !</p>
+  // if (!isStarted) {
+  //   return (
+  //     <div className="app-loader">
+  //       <div className="loader-content welcome-card">
+  //         <div className="auth--logo">
+  //           <img src="/favicon.jpg" alt="ChatNOVA" className="logo--img" />
+  //         </div>
+  //         <h2>Welcome to ChatNOVA</h2>
+  //         <p className="ready-text">Identity verified. You may now start !</p>
 
-          <button
-            className="get-started-btn"
-            onClick={() => setIsStarted(true)}
-          >
-            Get Started
-          </button>
-        </div>
-      </div>
-    );
-  }
+  //         <button
+  //           className="get-started-btn"
+  //           onClick={() => setIsStarted(true)}
+  //         >
+  //           Get Started
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return children;
 }

@@ -20,19 +20,19 @@ function ChatHeader({
 
         const diffMs = Math.max(0, Date.now() - date.getTime());
         const minutes = Math.floor(diffMs / 60000);
-        if (minutes < 1) return "Last seen just now";
-        if (minutes < 60) return `Last seen ${minutes} min${minutes === 1 ? "" : "s"} ago`;
+        if (minutes < 1) return "Seen just now";
+        if (minutes < 60) return `Seen ${minutes} min${minutes === 1 ? "" : "s"} ago`;
 
         const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `Last seen ${hours} hour${hours === 1 ? "" : "s"} ago`;
+        if (hours < 24) return `Seen ${hours} hour${hours === 1 ? "" : "s"} ago`;
 
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         if (date.toDateString() === yesterday.toDateString()) {
-            return `Last seen yesterday, ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+            return `Seen yesterday, ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
         }
 
-        return `Last seen ${date.toLocaleDateString([], { day: "numeric", month: "short" })}`;
+        return `Seen ${date.toLocaleDateString([], { day: "numeric", month: "short" })}`;
     };
 
     return (
@@ -49,7 +49,7 @@ function ChatHeader({
 
             <div className="chat-user-info">
 
-                <div className="chat-header-avatar-wrap" style={{ position: "relative", flexShrink: 0 }}>
+                <div className="chat-header-avatar-wrap">
 
                     <Avatar
                         src={profilePicture}
@@ -75,15 +75,10 @@ function ChatHeader({
                 </div>
 
                 <div className="chat-user-heading">
-                    <h3>{headerUsername}</h3>
+                    <h3>{headerUsername} {isTyping && <span className="typing-indicator">typing.....</span>}</h3>
                     <span className="chat-user-status">
-                        {isTyping ? (
-                            <span className="typing-indicator">typing...</span>
-                        ) : isOnline ? "Online" : formatLastSeen(lastSeen)}
+                        { isOnline ? <span className="chat-user-bio" title={bio}>{bio}</span> : <span> {formatLastSeen(lastSeen)} </span>}
                     </span>
-                    {!isTyping && bio && (
-                        <span className="chat-user-bio" title={bio}>{bio}</span>
-                    )}
                 </div>
 
             </div>
@@ -116,7 +111,7 @@ function ChatHeader({
                 </button>
 
             </div>
-            
+
         </header>
     );
 }

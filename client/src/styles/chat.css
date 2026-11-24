@@ -220,7 +220,9 @@ body {
     gap: 10px;
 }
 
-.profile-bio-footer small { color: #64748b; }
+.profile-bio-footer small {
+    color: #64748b;
+}
 
 body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     background: #111827;
@@ -530,6 +532,12 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     gap: 12px;
 }
 
+.chat-header-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    
+}
+
 .chat-user-avatar {
     width: 44px;
     height: 44px;
@@ -549,15 +557,18 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     margin: 0 0 3px;
 }
 
+.chat-user-info h3 span{
+    font-size: 9px;
+}
+
 .chat-user-status {
-    font-size: 12px;
+    font-size: 10px;
     color: #6b7280;
 }
 
 .chat-actions {
     display: flex;
     align-items: center;
-
     gap: 8px;
 }
 
