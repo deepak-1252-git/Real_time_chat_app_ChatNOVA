@@ -166,6 +166,27 @@ function Chat() {
         }
     }, [selectedUser]);
 
+    const handleMessageDelivered = useCallback(({ messageId, receiverId }) => {
+        if (selectedUser && String(receiverId) === String(selectedUser)) {
+            setMessages((prev) => prev.map((msg) =>
+                String(msg._id) === String(messageId)
+                    ? { ...msg, isDelivered: true }
+                    : msg
+            ));
+        }
+    }, [selectedUser]);
+
+    const handleMessagesDelivered = useCallback(({ messageIds = [], receiverId }) => {
+        if (selectedUser && String(receiverId) === String(selectedUser)) {
+            const deliveredIds = new Set(messageIds.map(String));
+            setMessages((prev) => prev.map((msg) =>
+                deliveredIds.has(String(msg._id))
+                    ? { ...msg, isDelivered: true }
+                    : msg
+            ));
+        }
+    }, [selectedUser]);
+
     const handleMessageReactionUpdated = useCallback(({ messageId, reactions }) => {
         setMessages((prevMessages) => prevMessages.map((msg) =>
             String(msg._id) === String(messageId)
@@ -209,6 +230,8 @@ function Chat() {
             onTyping: handleTyping,
             onStopTyping: handleStopTyping,
             onMessagesRead: handleMessagesRead,
+            onMessageDelivered: handleMessageDelivered,
+            onMessagesDelivered: handleMessagesDelivered,
             onMessageReactionUpdated: handleMessageReactionUpdated,
             onPresenceUpdated: handlePresenceUpdated
 

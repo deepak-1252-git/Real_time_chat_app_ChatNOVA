@@ -9,9 +9,9 @@ function MessageBubble({ message, isMine, currentUserId, onReact }) {
 
     return (
         <div className={`message-row ${isMine ? "mine" : "theirs"}`}>
- 
+
             <div className="message-tools">
- 
+
                 <div className={`reaction-picker ${isMine ? "mine" : "theirs"}`}>
                     <button
                         type="button"
@@ -37,7 +37,7 @@ function MessageBubble({ message, isMine, currentUserId, onReact }) {
                 </div>
 
             </div>
- 
+
             <div className={`message-bubble ${isMine ? "mine" : "theirs"}`}>
 
                 <div className="message-text">
@@ -50,16 +50,36 @@ function MessageBubble({ message, isMine, currentUserId, onReact }) {
                         minute: "2-digit"
                     })}
 
-                    {isMine && (
-                        <span
-                            className="message-status"
-                            style={{
-                                color: message.isRead ? "#ffffff" : "#010101"
-                            }}
-                        >
-                            {message.isRead ? "✓✓" : "✓"}
-                        </span>
-                    )}
+                    {isMine && (() => {
+                        const deliveryState = message.isRead
+                            ? "read"
+                            : message.isDelivered
+                                ? "delivered"
+                                : "sent";
+
+                        return (
+                            <span
+                                className={`message-ticks is-${deliveryState}`}
+                                role="img"
+                                aria-label={
+                                    deliveryState === "read"
+                                        ? "Read"
+                                        : deliveryState === "delivered"
+                                            ? "Delivered"
+                                            : "Sent"
+                                }
+                                title={
+                                    deliveryState === "read"
+                                        ? "Read"
+                                        : deliveryState === "delivered"
+                                            ? "Delivered"
+                                            : "Sent"
+                                }
+                            >
+                                {deliveryState === "sent" ? "✓" : "✓✓"}
+                            </span>
+                        );
+                    })()}
                 </div>
 
                 <div className="message-reactions">

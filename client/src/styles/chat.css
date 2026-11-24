@@ -748,7 +748,6 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     transform: scale(1.25);
 }
 
-/* ================================ */
 .message-text {
     font-size: 14px;
 
@@ -766,11 +765,18 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
 
 }
 
-.message-status {
+.message-ticks {
+    display: inline-block;
     margin-left: 5px;
-    font-Weight: bold;
-
+    font-size: 10px;
+    line-height: 1;
+    letter-spacing: -3px;
+    font-weight: 700;
 }
+.message-ticks.is-sent { opacity: 0.72; }
+.message-ticks.is-delivered { opacity: 0.9; color: #000; }
+.message-ticks.is-read { color: #ffffff !important; opacity: 1; }
+
 
 /* ------------- */
 .no-messages {
