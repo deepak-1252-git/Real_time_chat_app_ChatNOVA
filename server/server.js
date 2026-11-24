@@ -95,6 +95,35 @@ io.on("connection", (socket) => {
             if (!onlineUsers.has(userKey)) onlineUsers.set(userKey, new Set());
             onlineUsers.get(userKey).add(socket.id);
             await User.findByIdAndUpdate(userKey, { status: "online" });
+
+            // Messages queued while this user was offline become delivered on reconnect.
+            const pendingMessages = await Message.find({
+                receiver: userKey,
+                isDelivered: false
+            }).select("_id sender");
+            if (pendingMessages.length) {
+                const deliveredAt = new Date();
+                await Message.updateMany(
+                    { _id: { $in: pendingMessages.map((item) => item._id) } },
+                    { $set: { isDelivered: true, deliveredAt } }
+                );
+                const senderIds = [...new Set(pendingMessages.map((item) => String(item.sender)))];
+                for (const senderId of senderIds) {
+                    const senderSockets = onlineUsers.get(senderId);
+                    if (!senderSockets) continue;
+                    const messageIds = pendingMessages
+                        .filter((item) => String(item.sender) === senderId)
+                        .map((item) => String(item._id));
+                    for (const senderSocketId of senderSockets) {
+                        io.to(senderSocketId).emit("messagesDelivered", {
+                            messageIds,
+                            receiverId: userKey,
+                            deliveredAt
+                        });
+                    }
+                }
+            }
+
             await sendOnlineUsers();
             await refreshPresenceForUser(userKey);
         } catch (error) {
@@ -290,12 +319,28 @@ io.on("connection", (socket) => {
                 receiverId: receiverId,
                 message: newMessage.message,
                 isRead: newMessage.isRead,
+                isDelivered: newMessage.isDelivered,
+                deliveredAt: newMessage.deliveredAt,
                 reactions: [],
                 createdAt: newMessage.createdAt
             };
 
             // Send to sender
             socket.emit("messageSent", messageData);
+
+            // Delivery acknowledgement: online receiver sockets have received the event.
+            if (newMessage.isDelivered) {
+                const senderSockets = onlineUsers.get(String(socket.userId));
+                if (senderSockets) {
+                    for (const socketId of senderSockets) {
+                        io.to(socketId).emit("messageDelivered", {
+                            messageId: String(newMessage._id),
+                            receiverId: receiverIdString,
+                            deliveredAt: newMessage.deliveredAt
+                        });
+                    }
+                }
+            }
 
             if (newMessage.isRead) {
                 const senderSockets = onlineUsers.get(

@@ -99,7 +99,8 @@ router.put("/read/:userId", protect, async (req, res) => {
             },
             {
                 $set: {
-                    isRead: true
+                    isRead: true,
+                    isDelivered: true
                 }
             }
         );
@@ -167,7 +168,9 @@ router.get("/:userId", protect, async (req, res) => {
                 emoji: reaction.emoji
             })),
             createdAt: msg.createdAt,
-            isRead: msg.isRead
+            isRead: msg.isRead,
+            isDelivered: msg.isDelivered,
+            deliveredAt: msg.deliveredAt
         }));
 
         res.json({

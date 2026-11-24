@@ -20,6 +20,16 @@ const messageSchema = new mongoose.Schema(
             trim: true
         },
 
+           isDelivered: {
+            type: Boolean,
+            default: false
+        },
+
+        deliveredAt: {
+            type: Date,
+            default: null
+        },
+
         isRead: {
             type: Boolean,
             default: false
