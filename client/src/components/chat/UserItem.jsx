@@ -35,17 +35,15 @@ function UserItem({
                 isOnline={isOnline}
             />
             <div className="user-info">
-                {actions.map((item) => {
-                    item.label === "connected" &&
+                {/* {actions.map((item) => {
+                    item.label === "connected" && */}
 
-                        <div className="user-top-row">
-                            <h4>{user.username}</h4>
-                            <span className="last-time">
-                                {formatTime(lastMessage?.createdAt)}
-                            </span>
-                        </div>
-
-                })}
+                <div className="user-top-row">
+                    <h4>{user.username}</h4>
+                    <span className="last-time">
+                        {formatTime(lastMessage?.createdAt)}
+                    </span>
+                </div>
 
                 <div className="user-bottom-row">
                     <span className="last-message">
