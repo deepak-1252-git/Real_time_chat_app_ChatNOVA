@@ -69,6 +69,10 @@ body {
     gap: 10px;
 }
 
+.profile-info .status-dot{
+    display: none;
+}
+
 .profile-avatar {
     width: 42px;
     height: 42px;
@@ -530,12 +534,6 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     align-items: center;
 
     gap: 12px;
-}
-
-.chat-header-avatar-wrap {
-    position: relative;
-    flex-shrink: 0;
-    
 }
 
 .chat-user-avatar {
@@ -1656,12 +1654,13 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    overflow: hidden;
     border-radius: 50%;
     background: #e5e7eb;
     vertical-align: middle;
+    position: relative;
+    flex-shrink: 0;
 }
-
+ 
 .avatar-image {
     display: block;
     width: 100%;
@@ -1679,8 +1678,6 @@ body[data-chatnova-theme="dark"] .profile-bio-form textarea {
     font-size: 0.95em;
     line-height: 1;
 }
-
-
 
 /* Settings modal */
 .settings-modal {
@@ -2409,4 +2406,41 @@ body[data-chatnova-theme="dark"] .connection-action.primary {
 
 body[data-chatnova-theme="dark"] .connection-section-title {
     color: #a7b2c4;
+}
+
+
+/* Sidebar presence polish */
+.user-presence-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    margin-top: 4px;
+    line-height: 1.25;
+}
+
+.user-bio-preview {
+    min-width: 0;
+    overflow: hidden;
+    color: #101010;
+    font-size: 11px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.user-presence-label {
+    color: #000000c5;
+    font-weight: 600;
+}
+
+body[data-chatnova-theme="dark"] .avatar-presence-dot {
+    border-color: #1f2937;
+}
+
+body[data-chatnova-theme="dark"] .user-bio-preview {
+    color: #ffffff;
+}
+
+body[data-chatnova-theme="dark"] .user-presence-label {
+    color: #4ade80;
 }

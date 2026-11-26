@@ -1,5 +1,7 @@
 import Avatar from "./Avatar";
 import { ArrowLeftIcon } from "lucide-react"
+import FormatLastSeen from "./LastSeen";
+
 function ChatHeader({
     headerUsername,
     profilePicture,
@@ -12,28 +14,6 @@ function ChatHeader({
     onAudioCall,
     onVideoCall
 }) {
-
-    const formatLastSeen = (value) => {
-        if (!value) return "Offline";
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "Offline";
-
-        const diffMs = Math.max(0, Date.now() - date.getTime());
-        const minutes = Math.floor(diffMs / 60000);
-        if (minutes < 1) return "Seen just now";
-        if (minutes < 60) return `Seen ${minutes} min${minutes === 1 ? "" : "s"} ago`;
-
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `Seen ${hours} hour${hours === 1 ? "" : "s"} ago`;
-
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (date.toDateString() === yesterday.toDateString()) {
-            return `Seen yesterday, ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-        }
-
-        return `Seen ${date.toLocaleDateString([], { day: "numeric", month: "short" })}`;
-    };
 
     return (
         <header className="chat-header">
@@ -49,35 +29,18 @@ function ChatHeader({
 
             <div className="chat-user-info">
 
-                <div className="chat-header-avatar-wrap">
-
-                    <Avatar
-                        src={profilePicture}
-                        name={headerUsername}
-                        className="chat-user-avatar"
-                        size={44}
-                    />
-                    <span
-                        className={`status-dot ${isOnline ? "online" : "offline"}`}
-                        aria-label={isOnline ? "Online" : "Offline"}
-                        title={isOnline ? "Online" : "Offline"}
-                        style={{
-                            position: "absolute",
-                            right: 0,
-                            bottom: 1,
-                            width: 11,
-                            height: 11,
-                            border: "2px solid var(--chat-panel, #fff)",
-                            borderRadius: "50%",
-                            margin: 0
-                        }}
-                    />
-                </div>
+                <Avatar
+                    src={profilePicture}
+                    name={headerUsername}
+                    className="chat-user-avatar"
+                    size={44}
+                    isOnline={isOnline}
+                />
 
                 <div className="chat-user-heading">
                     <h3>{headerUsername} {isTyping && <span className="typing-indicator">typing.....</span>}</h3>
                     <span className="chat-user-status">
-                        { isOnline ? <span className="chat-user-bio" title={bio}>{bio}</span> : <span> {formatLastSeen(lastSeen)} </span>}
+                        {isOnline ? <span className="chat-user-bio" title={bio}>{bio}</span> : <span> {FormatLastSeen(lastSeen)} </span>}
                     </span>
                 </div>
 

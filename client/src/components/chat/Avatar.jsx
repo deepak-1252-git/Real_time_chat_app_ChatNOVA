@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { UserRound } from 'lucide-react';
+import { UserRound } from "lucide-react";
 
 function Avatar({
     src,
     name = "User",
     size = 44,
     className = "",
-    title
+    title,
+    isOnline = false
 }) {
     const [imageFailed, setImageFailed] = useState(false);
 
@@ -21,7 +22,7 @@ function Avatar({
             className={`avatar-root ${className}`.trim()}
             style={{ width: size, height: size, minWidth: size, minHeight: size }}
             role="img"
-            aria-label={`${name || "User"} avatar`}
+            aria-label={`${name || "User"} avatar${isOnline ? ", online" : ""}`}
             title={title || name}
         >
             {showImage ? (
@@ -36,6 +37,22 @@ function Avatar({
                     <UserRound size={size * 0.55} />
                 </span>
             )}
+            <span
+                className={`status-dot ${isOnline ? "online" : "offline"}`}
+                aria-label={isOnline ? "Online" : "Offline"}
+                title={isOnline ? "Online" : "Offline"}
+                style={{
+                    position: "absolute",
+                    right: 0,
+                    bottom: 1,
+                    width: 11,
+                    height: 11,
+                    border: "2px solid var(--chat-panel, #fff)",
+                    borderRadius: "50%",
+                    margin: 0
+                }}
+            />
+
         </div>
     );
 }

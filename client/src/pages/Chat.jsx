@@ -872,11 +872,46 @@ function Chat() {
     };
 
     const onlineIds = new Set(onlineUsers.map((item) => String(item.userId)));
-    const onlineConnections = connections.filter((item) => onlineIds.has(String(item.userId)));
+
+    // Merge API data with the latest socket presence event. The API's privacy-filtered
+    // values remain the fallback, while an explicit null lastSeen from the socket is respected.
+    const enrichWithPresence = (item) => {
+        const live = presenceByUser[String(item.userId)] || {};
+        const status = live.status || (onlineIds.has(String(item.userId)) ? "online" : item.status || "offline");
+
+        return {
+            ...item,
+            ...live,
+            status,
+            bio: live.bio ?? item.bio ?? "",
+            lastSeen: Object.prototype.hasOwnProperty.call(live, "lastSeen")
+                ? live.lastSeen
+                : (item.lastSeen ?? null)
+        };
+    };
+
+    // Online contacts appear first; among offline contacts, most recently seen appear first.
+    const sortByPresence = (a, b) => {
+        const onlineDifference = Number(b.status === "online") - Number(a.status === "online");
+        if (onlineDifference !== 0) return onlineDifference;
+
+        const aTime = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+        const bTime = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
+        if (aTime !== bTime) return bTime - aTime;
+
+        return String(a.username || "").localeCompare(String(b.username || ""));
+    };
+
+    const enrichedConnections = connections.map(enrichWithPresence).sort(sortByPresence);
+    const onlineConnections = enrichedConnections.filter((item) => item.status === "online");
+    const enrichedDiscoverUsers = discoverUsers.map(enrichWithPresence).sort(sortByPresence);
+    const enrichedIncoming = incoming.map(enrichWithPresence).sort(sortByPresence);
+    const enrichedOutgoing = outgoing.map(enrichWithPresence).sort(sortByPresence);
+
     const sidebarUsers = activeTab === "online" ? onlineConnections
-        : activeTab === "meet" ? connections
-            : activeTab === "discover" ? discoverUsers
-                : { incoming, outgoing };
+        : activeTab === "meet" ? enrichedConnections
+            : activeTab === "discover" ? enrichedDiscoverUsers
+                : { incoming: enrichedIncoming, outgoing: enrichedOutgoing };
 
     const handleConnectionAction = async (action, item) => {
         setActionError("");

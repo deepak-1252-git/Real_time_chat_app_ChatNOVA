@@ -43,7 +43,7 @@ function ChatWindow({
                 isOnline={isOnline}
                 isTyping={isTyping}
                 onBack={onBack}
-                 lastSeen={lastSeen}
+                lastSeen={lastSeen}
                 bio={bio}
                 onAudioCall={onAudioCall}
                 onVideoCall={onVideoCall}
